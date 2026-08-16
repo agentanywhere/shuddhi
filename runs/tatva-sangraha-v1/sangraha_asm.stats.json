@@ -1,0 +1,137 @@
+{
+ "shard": {
+  "shard_id": "sangraha_asm",
+  "source": "AI4Bharat Sangraha, verified subset",
+  "license": "CC-BY-4.0",
+  "date_acquired": "2026-08-08",
+  "data_class": "public",
+  "language": "asm"
+ },
+ "reviewed_by": "",
+ "registry_sha256": "7eac021c2137c075d1b8b0cf819e27e77a96ea331d3266217dd860e295640a0e",
+ "env": {
+  "factory_version": "1.0.0",
+  "python": "3.10.12",
+  "host": "LLM-VM",
+  "git_commit": "manual",
+  "numpy": "2.2.6",
+  "tokenizers": "0.23.1"
+ },
+ "full_pass": {
+  "truncated_by_max_docs": false,
+  "file_bytes": 2395708256,
+  "file_sha256": "22c8e9a0722f726975193e92c4c5ffc390a5d8517531f4a6231ca461a0af6131",
+  "docs": 328504,
+  "doc_bytes": 2395051243,
+  "exact_dup_docs": 0,
+  "exact_dup_rate": 0.0,
+  "unique_docs": 328504
+ },
+ "sample": {
+  "sample_every": 50,
+  "sampled_docs": 6571,
+  "sampled_doc_bytes": 48898620,
+  "doc_coverage": 0.02000280057472664
+ },
+ "lid": {
+  "method": "fasttext",
+  "consistent_with_shard_tag": 6124,
+  "consistency_rate": 0.9319738243798509,
+  "mean_confidence": 0.9004207012857128,
+  "lang_counts": {
+   "asm": 6124,
+   "ben": 133,
+   "eng": 97,
+   "id": 22,
+   "es": 19,
+   "et": 17,
+   "tl": 15,
+   "eo": 14,
+   "fi": 13,
+   "tr": 10,
+   "pl": 10,
+   "uz": 9,
+   "it": 8,
+   "de": 8,
+   "hr": 7,
+   "sq": 7,
+   "hu": 7,
+   "cy": 6,
+   "sw": 5,
+   "ku": 5,
+   "ms": 3,
+   "nl": 3,
+   "gn": 3,
+   "nn": 3,
+   "pt": 3
+  }
+ },
+ "quality": {
+  "buckets": {
+   "high": 6570,
+   "low": 1
+  },
+  "score_histogram": [
+   0,
+   0,
+   0,
+   1,
+   0,
+   0,
+   0,
+   0,
+   11,
+   6559
+  ],
+  "means": {
+   "score": 0.9991893166945676,
+   "symbol_ratio": 0.015754796133936953,
+   "digit_ratio": 0.008117152700877038,
+   "mean_word_len": 5.501567355168383,
+   "dup_line_frac": 0.001143534677094814,
+   "top_bigram_frac": 0.016906536017981304,
+   "boilerplate_hits": 0.008674478770354589
+  }
+ },
+ "domains": {
+  "general": 312,
+  "indic": 6254,
+  "bfsi": 4,
+  "reasoning": 1
+ },
+ "near_dup": {
+  "minhashed_docs": 1642,
+  "too_short_to_shingle": 0,
+  "clusters": 1641,
+  "near_dup_docs": 1,
+  "near_dup_rate": 0.0006090133982947625,
+  "largest_cluster": 2,
+  "params": {
+   "num_perm": 32,
+   "bands": 8,
+   "rows": 4,
+   "shingle_words": 5,
+   "verify_min_agree": 21,
+   "est_jaccard_threshold": 0.656
+  }
+ },
+ "contamination": {
+  "eval_set_sha256": "0a4d786dd10f6194f04b86ef8f15d0c075e9a494a77c6aefebb05e3699aa1c8b",
+  "docs_checked": 6571,
+  "docs_with_hits": 0,
+  "hits": []
+ },
+ "tokens": {
+  "measured_docs": 328,
+  "measured_bytes": 2163354,
+  "measured_tokens": 624070,
+  "bytes_per_token": 3.4665,
+  "estimated_shard_tokens": 690908482
+ },
+ "token_sample_fill_byte_depth": null,
+ "timing": {
+  "wall_seconds": 36.4,
+  "cpu_seconds": 35.8,
+  "mb_per_second": 65.9
+ }
+}

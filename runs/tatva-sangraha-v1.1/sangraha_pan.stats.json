@@ -1,0 +1,143 @@
+{
+ "shard": {
+  "shard_id": "sangraha_pan",
+  "source": "AI4Bharat Sangraha, verified subset",
+  "license": "CC-BY-4.0",
+  "date_acquired": "2026-08-08",
+  "data_class": "public",
+  "language": "pan"
+ },
+ "reviewed_by": "",
+ "registry_sha256": "7eac021c2137c075d1b8b0cf819e27e77a96ea331d3266217dd860e295640a0e",
+ "env": {
+  "factory_version": "1.1.0",
+  "python": "3.10.12",
+  "host": "LLM-VM",
+  "git_commit": "",
+  "numpy": "2.2.6",
+  "tokenizers": "0.23.1"
+ },
+ "full_pass": {
+  "truncated_by_max_docs": false,
+  "file_bytes": 5386342278,
+  "file_sha256": "39898370f4731985c476468e2f201357a2261e3afb84441e4d90983fc764a42d",
+  "docs": 885347,
+  "doc_bytes": 5384571455,
+  "exact_dup_docs": 2,
+  "exact_dup_rate": 2.2590012729472173e-06,
+  "unique_docs": 885345
+ },
+ "sample": {
+  "sample_every": 50,
+  "sampled_docs": 17707,
+  "sampled_doc_bytes": 106641457,
+  "doc_coverage": 0.02000006777003819
+ },
+ "lid": {
+  "method": "fasttext",
+  "consistent_with_shard_tag": 17688,
+  "consistency_rate": 0.998926978031287,
+  "mean_confidence": 0.9988670528310355,
+  "lang_counts": {
+   "pan": 17688,
+   "eng": 7,
+   "hin": 4,
+   "uz": 2,
+   "es": 1,
+   "lv": 1,
+   "an": 1,
+   "sl": 1,
+   "ms": 1,
+   "tel": 1
+  }
+ },
+ "quality": {
+  "buckets": {
+   "high": 17705,
+   "medium": 2
+  },
+  "score_histogram": [
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   0,
+   4,
+   17,
+   17686
+  ],
+  "means": {
+   "score": 0.999430846557858,
+   "symbol_ratio": 0.018111104583996486,
+   "digit_ratio": 0.007792831633666139,
+   "mean_word_len": 4.0938891763928575,
+   "dup_line_frac": 0.0019123447698422332,
+   "top_bigram_frac": 0.016461939091223135,
+   "boilerplate_hits": 0.005026260800813238
+  }
+ },
+ "domains": {
+  "indic": 17687,
+  "general": 14,
+  "coding": 1,
+  "bfsi": 3,
+  "reasoning": 2
+ },
+ "near_dup": {
+  "minhashed_docs": 4426,
+  "too_short_to_shingle": 0,
+  "clusters": 4426,
+  "near_dup_docs": 0,
+  "near_dup_rate": 0.0,
+  "largest_cluster": 1,
+  "params": {
+   "num_perm": 32,
+   "bands": 8,
+   "rows": 4,
+   "shingle_words": 5,
+   "verify_min_agree": 21,
+   "est_jaccard_threshold": 0.656
+  }
+ },
+ "contamination": {
+  "eval_set_sha256": "0a4d786dd10f6194f04b86ef8f15d0c075e9a494a77c6aefebb05e3699aa1c8b",
+  "docs_checked": 17707,
+  "docs_with_hits": 0,
+  "hits": []
+ },
+ "ppx": {
+  "lm": "pan.lm.gz",
+  "scored_docs": 17707,
+  "mean_bits_per_char": 3.1028,
+  "p50": 3.0548,
+  "p90": 3.3956,
+  "p99": 4.2875,
+  "max": 7.715
+ },
+ "pii": {
+  "scanned_docs": 17707,
+  "docs_with_pii": 85,
+  "counts_by_type": {
+   "email": 61,
+   "phone_in": 39,
+   "ip": 7,
+   "aadhaar": 1,
+   "card": 3
+  }
+ },
+ "tokens": {
+  "measured_docs": 885,
+  "measured_bytes": 5317135,
+  "measured_tokens": 1351815,
+  "bytes_per_token": 3.9333,
+  "estimated_shard_tokens": 1368959874
+ },
+ "token_sample_fill_byte_depth": null,
+ "timing": {
+  "wall_seconds": 94.3,
+  "cpu_seconds": 93.9,
+  "mb_per_second": 57.1
+ }
+}

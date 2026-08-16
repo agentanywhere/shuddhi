@@ -1,0 +1,30 @@
+[project]
+name = "tatva-data-factory"
+version = "1.2.0"
+description = "Receipts-first dataset cleansing engine: provenance-gated ingest, reproducible corpus build hashes, chained filtered builds (public product name: Shuddhi)"
+requires-python = ">=3.10"
+license = { text = "Proprietary" }  # OSS license decision pending — see portfolio/DATA-FACTORY-OSS-PLAN.md
+dependencies = ["numpy>=1.24"]
+
+[project.optional-dependencies]
+lid = ["fasttext-predict"]
+tokens = ["tokenizers"]
+extract = ["trafilatura"]
+dev = ["pytest"]
+
+[project.scripts]
+data-factory = "factory:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = [
+  "factory", "registry", "shards", "dedup", "neardup", "lid", "quality",
+  "domain", "contamination", "tokens", "ngram_lm", "pii", "toxicity",
+  "extract", "builder", "build_eval_set",
+]

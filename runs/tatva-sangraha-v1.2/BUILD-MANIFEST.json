@@ -1,0 +1,278 @@
+{
+ "build_manifest_version": 1,
+ "corpus_id": "tatva-sangraha-v1",
+ "parent_corpus_build_hash": "5e8fbb96cf1a4e7f6ab2468349657ce678759a97400f9e97952fa11919bb1efd",
+ "hash_definition": "blake2b-256 over the ascending-sorted kept doc-hash set (same definition as the parent corpus_build_hash). Chain: parent hash + filter config sha -> this hash. Cite filtered_build_hash in the training-run ledger.",
+ "filter_config": {
+  "drop_contaminated": true,
+  "max_bits_per_char": {
+   "asm": 4.7721,
+   "ben": 4.2302,
+   "eng": 4.9169,
+   "guj": 4.4498,
+   "hin": 4.2625,
+   "kan": 4.4295,
+   "mal": 3.7059,
+   "mar": 3.9698,
+   "nep": 3.7313,
+   "ori": 4.1691,
+   "pan": 4.2875,
+   "san": 4.8962,
+   "tam": 3.8886,
+   "tel": 4.4892,
+   "urd": 3.9953
+  },
+  "min_quality": 0.5,
+  "neardup_droplist_sha256": "ec4b398bd6666efcd7440d1d642f51d169be1a5315e9a009bd49cd11af727e86",
+  "pii_policy": "redact",
+  "scorer_params": {
+   "ppx_probe_chars": 512,
+   "quality_probe_chars": 4000,
+   "quality_probe_words": 500
+  },
+  "toxicity_lexicon_sha256": "5d0bac43cceaf00fb920fcbb98ece7673ac21e866d5561f1a2770c710cb4f4af"
+ },
+ "filter_config_sha256": "5668872bdfdad73385e1c1b3c2da51ec595e870092adebe7ef1cc812c1da9d41",
+ "filtered_build_hash": "a532e4edb79a5c4f090ccb66167d19ccf11324a955fcb21610aa1dab598ef404",
+ "generated_utc": "2026-08-12T23:37:39Z",
+ "env": {
+  "factory_version": "1.2.0",
+  "python": "3.10.12",
+  "host": "LLM-VM",
+  "git_commit": "",
+  "numpy": "2.2.6",
+  "tokenizers": "0.23.1"
+ },
+ "union_of": [
+  "build12-p1",
+  "build12-p2"
+ ],
+ "shards_built": [
+  "sangraha_hin",
+  "sangraha_tam",
+  "sangraha_tel",
+  "sangraha_mar",
+  "sangraha_guj",
+  "sangraha_urd",
+  "sangraha_san",
+  "sangraha_eng",
+  "sangraha_ben",
+  "sangraha_mal",
+  "sangraha_kan",
+  "sangraha_pan",
+  "sangraha_ori",
+  "sangraha_nep",
+  "sangraha_asm"
+ ],
+ "partial_build": true,
+ "kept_docs": 32289800,
+ "cross_partition_rekept_docs": 9,
+ "dropped_by_reason": {
+  "exact_dup": 127024,
+  "near_dup": 272640,
+  "quality": 7086,
+  "perplexity": 345505,
+  "toxicity": 5306,
+  "contamination": 0,
+  "pii": 0
+ },
+ "pii_redactions": 182781,
+ "per_shard": {
+  "sangraha_hin": {
+   "kept_docs": 5488841,
+   "dropped": {
+    "exact_dup": 120661,
+    "near_dup": 47386,
+    "quality": 1135,
+    "perplexity": 56829,
+    "toxicity": 790,
+    "contamination": 0,
+    "pii": 0
+   },
+   "pii_redactions": 21952
+  },
+  "sangraha_tam": {
+   "kept_docs": 2186302,
+   "dropped": {
+    "exact_dup": 55,
+    "near_dup": 8727,
+    "quality": 968,
+    "perplexity": 23271,
+    "toxicity": 23,
+    "contamination": 0,
+    "pii": 0
+   },
+   "pii_redactions": 10105
+  },
+  "sangraha_tel": {
+   "kept_docs": 2362610,
+   "dropped": {
+    "exact_dup": 15,
+    "near_dup": 7694,
+    "quality": 139,
+    "perplexity": 24264,
+    "toxicity": 29,
+    "contamination": 0,
+    "pii": 0
+   },
+   "pii_redactions": 9086
+  },
+  "sangraha_mar": {
+   "kept_docs": 1894293,
+   "dropped": {
+    "exact_dup": 8,
+    "near_dup": 4066,
+    "quality": 310,
+    "perplexity": 20169,
+    "toxicity": 1364,
+    "contamination": 0,
+    "pii": 0
+   },
+   "pii_redactions": 8114
+  },
+  "sangraha_guj": {
+   "kept_docs": 1319270,
+   "dropped": {
+    "exact_dup": 7,
+    "near_dup": 7900,
+    "quality": 4,
+    "perplexity": 13479,
+    "toxicity": 29,
+    "contamination": 0,
+    "pii": 0
+   },
+   "pii_redactions": 6622
+  },
+  "sangraha_urd": {
+   "kept_docs": 1339334,
+   "dropped": {
+    "exact_dup": 3,
+    "near_dup": 6820,
+    "quality": 5,
+    "perplexity": 14596,
+    "toxicity": 11,
+    "contamination": 0,
+    "pii": 0
+   },
+   "pii_redactions": 2143
+  },
+  "sangraha_san": {
+   "kept_docs": 488576,
+   "dropped": {
+    "exact_dup": 1,
+    "near_dup": 710,
+    "quality": 1,
+    "perplexity": 5821,
+    "toxicity": 0,
+    "contamination": 0,
+    "pii": 0
+   },
+   "pii_redactions": 1964
+  },
+  "sangraha_eng": {
+   "kept_docs": 4704056,
+   "dropped": {
+    "exact_dup": 5829,
+    "near_dup": 115801,
+    "quality": 653,
+    "perplexity": 48652,
+    "toxicity": 2869,
+    "contamination": 0,
+    "pii": 0
+   },
+   "pii_redactions": 27816
+  },
+  "sangraha_ben": {
+   "kept_docs": 2791471,
+   "dropped": {
+    "exact_dup": 33,
+    "near_dup": 8657,
+    "quality": 1666,
+    "perplexity": 28808,
+    "toxicity": 22,
+    "contamination": 0,
+    "pii": 0
+   },
+   "pii_redactions": 5402
+  },
+  "sangraha_mal": {
+   "kept_docs": 2143547,
+   "dropped": {
+    "exact_dup": 286,
+    "near_dup": 9870,
+    "quality": 2072,
+    "perplexity": 24196,
+    "toxicity": 8,
+    "contamination": 0,
+    "pii": 0
+   },
+   "pii_redactions": 12201
+  },
+  "sangraha_kan": {
+   "kept_docs": 1020388,
+   "dropped": {
+    "exact_dup": 63,
+    "near_dup": 2753,
+    "quality": 105,
+    "perplexity": 11984,
+    "toxicity": 6,
+    "contamination": 0,
+    "pii": 0
+   },
+   "pii_redactions": 7490
+  },
+  "sangraha_pan": {
+   "kept_docs": 871219,
+   "dropped": {
+    "exact_dup": 9,
+    "near_dup": 4816,
+    "quality": 17,
+    "perplexity": 9261,
+    "toxicity": 25,
+    "contamination": 0,
+    "pii": 0
+   },
+   "pii_redactions": 4394
+  },
+  "sangraha_ori": {
+   "kept_docs": 1074564,
+   "dropped": {
+    "exact_dup": 27,
+    "near_dup": 3592,
+    "quality": 3,
+    "perplexity": 12796,
+    "toxicity": 2,
+    "contamination": 0,
+    "pii": 0
+   },
+   "pii_redactions": 48433
+  },
+  "sangraha_nep": {
+   "kept_docs": 4283137,
+   "dropped": {
+    "exact_dup": 0,
+    "near_dup": 41501,
+    "quality": 6,
+    "perplexity": 47453,
+    "toxicity": 127,
+    "contamination": 0,
+    "pii": 0
+   },
+   "pii_redactions": 16027
+  },
+  "sangraha_asm": {
+   "kept_docs": 322201,
+   "dropped": {
+    "exact_dup": 27,
+    "near_dup": 2347,
+    "quality": 2,
+    "perplexity": 3926,
+    "toxicity": 1,
+    "contamination": 0,
+    "pii": 0
+   },
+   "pii_redactions": 1032
+  }
+ },
+ "emit": "none"
+}
