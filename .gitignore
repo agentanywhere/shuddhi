@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.pytest_cache/
+# large local artefacts — receipts live in runs/, not the data itself
+out*/
+build*/
+sigs/
+lms/
+*.hashes.u64
+*.kept.u64
+*.sigs.u64
+*.valid.u8
+*.ftz

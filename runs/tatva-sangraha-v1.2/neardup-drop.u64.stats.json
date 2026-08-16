@@ -1,0 +1,17 @@
+{
+ "docs": 33047370,
+ "shingleable": 33045355,
+ "verified_pairs": 2208260,
+ "clusters": 258406,
+ "docs_in_clusters": 657800,
+ "largest_cluster": 84275,
+ "dropped_unique_hashes": 272636,
+ "droplist_sha256": "ec4b398bd6666efcd7440d1d642f51d169be1a5315e9a009bd49cd11af727e86",
+ "params": {
+  "num_perm": 32,
+  "bands": 8,
+  "rows": 4,
+  "verify_min_agree": 21,
+  "exemplar_rule": "min-doc-hash-in-cluster"
+ }
+}
