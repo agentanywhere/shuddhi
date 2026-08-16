@@ -1,0 +1,240 @@
+{
+ "manifest_version": 1,
+ "corpus_id": "tatva-sangraha-v1",
+ "corpus_build_hash": "5e8fbb96cf1a4e7f6ab2468349657ce678759a97400f9e97952fa11919bb1efd",
+ "build_hash_definition": "blake2b-256 over the ascending-sorted set of unique 64-bit document content hashes (blake2b-8 of each blank-line-separated document, surrounding whitespace stripped) across all accepted shards. Order-independent and reproducible from the raw shard files. Every training run that consumes this corpus must cite this hash in its run ledger.",
+ "generated_utc": "2026-08-10T13:07:47Z",
+ "env": {
+  "factory_version": "1.0.0",
+  "python": "3.10.12",
+  "host": "LLM-VM",
+  "git_commit": "manual",
+  "numpy": "2.2.6",
+  "tokenizers": "0.23.1"
+ },
+ "registry": {
+  "path": "configs/tatva-sangraha-v1.json",
+  "sha256": "7eac021c2137c075d1b8b0cf819e27e77a96ea331d3266217dd860e295640a0e"
+ },
+ "provenance_gate": {
+  "accepted_shards": 15,
+  "refused": [],
+  "not_yet_processed": []
+ },
+ "shards": [
+  {
+   "shard_id": "sangraha_hin",
+   "source": "AI4Bharat Sangraha, verified subset",
+   "license": "CC-BY-4.0",
+   "date_acquired": "2026-07-24",
+   "data_class": "public",
+   "language": "hin",
+   "file_sha256": "91ab59afc5b3c1336b58f2f02bc37bef15063de3fe929dc1a7370db09ef4aa3d",
+   "file_bytes": 31834360642,
+   "docs": 5715642,
+   "exact_dup_rate": 0.021110664383808504
+  },
+  {
+   "shard_id": "sangraha_eng",
+   "source": "AI4Bharat Sangraha, verified subset",
+   "license": "CC-BY-4.0",
+   "date_acquired": "2026-07-24",
+   "data_class": "public",
+   "language": "eng",
+   "file_sha256": "803e55f4abb219d48964fe6e1489ea1404c17c2f1c41d0a7cb33fbc57a6f1115",
+   "file_bytes": 13314635253,
+   "docs": 4877860,
+   "exact_dup_rate": 0.0011949912461612265
+  },
+  {
+   "shard_id": "sangraha_ben",
+   "source": "AI4Bharat Sangraha, verified subset",
+   "license": "CC-BY-4.0",
+   "date_acquired": "2026-07-24",
+   "data_class": "public",
+   "language": "ben",
+   "file_sha256": "219d23eed1ec39cb7270a6058d8fae34c7101fcc174bcbee5c0bed05378ee6b9",
+   "file_bytes": 19020465942,
+   "docs": 2830657,
+   "exact_dup_rate": 1.09515211486238e-05
+  },
+  {
+   "shard_id": "sangraha_tam",
+   "source": "AI4Bharat Sangraha, verified subset",
+   "license": "CC-BY-4.0",
+   "date_acquired": "2026-07-24",
+   "data_class": "public",
+   "language": "tam",
+   "file_sha256": "ee617768fb7076ea988efb80e5abfb6808333d8b8ebe982d5c14d2094f1b314c",
+   "file_bytes": 14918079233,
+   "docs": 2219346,
+   "exact_dup_rate": 2.4331492250419718e-05
+  },
+  {
+   "shard_id": "sangraha_tel",
+   "source": "AI4Bharat Sangraha, verified subset",
+   "license": "CC-BY-4.0",
+   "date_acquired": "2026-07-24",
+   "data_class": "public",
+   "language": "tel",
+   "file_sha256": "4f88299770ae059a01332297ffbd5319679c4fb60340f6b66c453f012cbdceff",
+   "file_bytes": 12901442053,
+   "docs": 2394751,
+   "exact_dup_rate": 5.428539334569649e-06
+  },
+  {
+   "shard_id": "sangraha_mar",
+   "source": "AI4Bharat Sangraha, verified subset",
+   "license": "CC-BY-4.0",
+   "date_acquired": "2026-07-24",
+   "data_class": "public",
+   "language": "mar",
+   "file_sha256": "59d21dbfd8b49e2fb69437cc404f72933326607f1ea798d902224f63da624a6b",
+   "file_bytes": 10921714543,
+   "docs": 1920210,
+   "exact_dup_rate": 2.603881867087454e-06
+  },
+  {
+   "shard_id": "sangraha_mal",
+   "source": "AI4Bharat Sangraha, verified subset",
+   "license": "CC-BY-4.0",
+   "date_acquired": "2026-07-24",
+   "data_class": "public",
+   "language": "mal",
+   "file_sha256": "9a4a7022deb048bb235266f816f7a388c3c69e6ace5d15c9991db88f8bb61a36",
+   "file_bytes": 11206066773,
+   "docs": 2179979,
+   "exact_dup_rate": 0.00013119392434514276
+  },
+  {
+   "shard_id": "sangraha_guj",
+   "source": "AI4Bharat Sangraha, verified subset",
+   "license": "CC-BY-4.0",
+   "date_acquired": "2026-07-24",
+   "data_class": "public",
+   "language": "guj",
+   "file_sha256": "9b4ed940aeda981e44095b35f4aed3d3bbf3fa8f5050f70fe4e8b667611ec2e2",
+   "file_bytes": 8391660728,
+   "docs": 1340689,
+   "exact_dup_rate": 4.4753108289842015e-06
+  },
+  {
+   "shard_id": "sangraha_kan",
+   "source": "AI4Bharat Sangraha, verified subset",
+   "license": "CC-BY-4.0",
+   "date_acquired": "2026-07-24",
+   "data_class": "public",
+   "language": "kan",
+   "file_sha256": "aeeea9d55969212358ec647d76d4205c37f499d7b381d5bca796220ce680c59f",
+   "file_bytes": 5633872996,
+   "docs": 1035299,
+   "exact_dup_rate": 5.6988367611675466e-05
+  },
+  {
+   "shard_id": "sangraha_urd",
+   "source": "AI4Bharat Sangraha, verified subset",
+   "license": "CC-BY-4.0",
+   "date_acquired": "2026-08-08",
+   "data_class": "public",
+   "language": "urd",
+   "file_sha256": "1d5d8d9cdef3fc059c02a3ac407f9b4f45d34c57a00124eb8e8f3b04014a281c",
+   "file_bytes": 6550535835,
+   "docs": 1360769,
+   "exact_dup_rate": 7.348785870342431e-07
+  },
+  {
+   "shard_id": "sangraha_pan",
+   "source": "AI4Bharat Sangraha, verified subset",
+   "license": "CC-BY-4.0",
+   "date_acquired": "2026-08-08",
+   "data_class": "public",
+   "language": "pan",
+   "file_sha256": "39898370f4731985c476468e2f201357a2261e3afb84441e4d90983fc764a42d",
+   "file_bytes": 5386342278,
+   "docs": 885347,
+   "exact_dup_rate": 2.2590012729472173e-06
+  },
+  {
+   "shard_id": "sangraha_ori",
+   "source": "AI4Bharat Sangraha, verified subset",
+   "license": "CC-BY-4.0",
+   "date_acquired": "2026-08-08",
+   "data_class": "public",
+   "language": "ori",
+   "file_sha256": "b40f69931e26cf1115f52c46fe5e5e3e4befe2ec82f5d61a8e80eb8cc995b0fd",
+   "file_bytes": 5452844114,
+   "docs": 1090984,
+   "exact_dup_rate": 1.558226335124988e-05
+  },
+  {
+   "shard_id": "sangraha_nep",
+   "source": "AI4Bharat Sangraha, verified subset",
+   "license": "CC-BY-4.0",
+   "date_acquired": "2026-08-08",
+   "data_class": "public",
+   "language": "nep",
+   "file_sha256": "d35dfbb27a8d23e9d247977fceb61d4be5976aaec091b3250beb1d589723e80d",
+   "file_bytes": 22485847899,
+   "docs": 4372224,
+   "exact_dup_rate": 0.0
+  },
+  {
+   "shard_id": "sangraha_san",
+   "source": "AI4Bharat Sangraha, verified subset",
+   "license": "CC-BY-4.0",
+   "date_acquired": "2026-08-08",
+   "data_class": "public",
+   "language": "san",
+   "file_sha256": "fa67af4c76909e655d7b8f0433d35ad404e7b8afa9c680383e5e881799f5d66b",
+   "file_bytes": 5751431050,
+   "docs": 495109,
+   "exact_dup_rate": 2.0197572655718235e-06
+  },
+  {
+   "shard_id": "sangraha_asm",
+   "source": "AI4Bharat Sangraha, verified subset",
+   "license": "CC-BY-4.0",
+   "date_acquired": "2026-08-08",
+   "data_class": "public",
+   "language": "asm",
+   "file_sha256": "22c8e9a0722f726975193e92c4c5ffc390a5d8517531f4a6231ca461a0af6131",
+   "file_bytes": 2395708256,
+   "docs": 328504,
+   "exact_dup_rate": 0.0
+  }
+ ],
+ "full_pass": {
+  "total_docs": 33047370,
+  "unique_docs": 32920312,
+  "duplicate_docs": 127058,
+  "global_exact_dup_rate": 0.0038447234984206003,
+  "intra_shard_dup_docs": 126965,
+  "cross_shard_dup_docs": 93,
+  "unique_doc_ratio": 0.9961552765015794,
+  "total_doc_bytes": 176098900771
+ },
+ "sampled": {
+  "sampled_docs": 660955,
+  "doc_coverage": 0.02000022997291464,
+  "quality_buckets": {
+   "high": 660245,
+   "medium": 572,
+   "low": 138
+  },
+  "domains": {
+   "indic": 556044,
+   "bfsi": 5902,
+   "reasoning": 1150,
+   "general": 97771,
+   "coding": 88
+  },
+  "contamination": {
+   "docs_checked": 660955,
+   "docs_with_hits": 0
+  }
+ },
+ "tokens": {
+  "estimated_total_tokens": 48794041447,
+  "estimate_basis": "per-shard measured bytes/token (Tatva 32k tokenizer) × raw shard bytes; see each shard's stats for the measured sample"
+ }
+}

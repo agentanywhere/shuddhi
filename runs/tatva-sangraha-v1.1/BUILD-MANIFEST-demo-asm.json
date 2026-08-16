@@ -1,0 +1,77 @@
+{
+ "build_manifest_version": 1,
+ "corpus_id": "tatva-sangraha-v1",
+ "parent_corpus_build_hash": "5e8fbb96cf1a4e7f6ab2468349657ce678759a97400f9e97952fa11919bb1efd",
+ "filter_config": {
+  "drop_contaminated": true,
+  "max_bits_per_char": {
+   "asm": 4.7721,
+   "ben": 4.2302,
+   "eng": 4.9169,
+   "guj": 4.4498,
+   "hin": 4.2625,
+   "kan": 4.4295,
+   "mal": 3.7059,
+   "mar": 3.9698,
+   "nep": 3.7313,
+   "ori": 4.1691,
+   "pan": 4.2875,
+   "san": 4.8962,
+   "tam": 3.8886,
+   "tel": 4.4892,
+   "urd": 3.9953
+  },
+  "min_quality": 0.5,
+  "pii_policy": "redact",
+  "scorer_params": {
+   "ppx_probe_chars": 512,
+   "quality_probe_chars": 4000,
+   "quality_probe_words": 500
+  }
+ },
+ "filter_config_sha256": "32bcaec5ac0509fcafac4850e670834d6d4a3242550f6292089bc3f5c95b8627",
+ "filtered_build_hash": "b6630c43064fbf094117edbab48d46316ca2610acbe5b4beb6bda8040441f841",
+ "hash_definition": "blake2b-256 over the ascending-sorted kept doc-hash set (same definition as the parent corpus_build_hash). Chain: parent hash + filter config sha -> this hash. Cite filtered_build_hash in the training-run ledger.",
+ "generated_utc": "2026-08-11T07:20:49Z",
+ "env": {
+  "factory_version": "1.1.0",
+  "python": "3.10.12",
+  "host": "LLM-VM",
+  "git_commit": "",
+  "numpy": "2.2.6",
+  "tokenizers": "0.23.1"
+ },
+ "shards_built": [
+  "sangraha_asm"
+ ],
+ "partial_build": true,
+ "kept_docs": 324558,
+ "dropped_by_reason": {
+  "exact_dup": 0,
+  "quality": 2,
+  "perplexity": 3944,
+  "contamination": 0,
+  "pii": 0
+ },
+ "pii_redactions": 1057,
+ "per_shard": {
+  "sangraha_asm": {
+   "kept_docs": 324558,
+   "dropped": {
+    "exact_dup": 0,
+    "quality": 2,
+    "perplexity": 3944,
+    "contamination": 0,
+    "pii": 0
+   },
+   "pii_redactions": 1057,
+   "emitted_file": {
+    "path": "build-demo-asm/sangraha_asm.filtered.txt",
+    "sha256": "5bcd95f6a5eaf6a4633d2ae41027e464a3458b7367876855e0c73b142265a335",
+    "bytes": 2374561555
+   }
+  }
+ },
+ "emit": "text",
+ "wall_seconds": 483.3
+}

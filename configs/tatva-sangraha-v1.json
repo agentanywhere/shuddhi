@@ -1,0 +1,22 @@
+{
+  "registry_version": 1,
+  "corpus_id": "tatva-sangraha-v1",
+  "_comment": "Paths are on the Azure LLM VM (52.172.130.92), where the raw extraction lives (/home/azureuser/big/txt). Blob backup: agentanywhere/tatva-corpus/ (per-language zstd, byte-verified 2026-08-08). Source: AI4Bharat Sangraha *verified* subset, extracted 2026-07-24 by ~/big/build_big_corpus.py; urd/pan/ori re-pulled 2026-08-08 (build_missing6.py), nep/san/asm completed 2026-08-08 (build_missing3.py).",
+  "shards": [
+    {"shard_id": "sangraha_hin", "path": "/home/azureuser/big/txt/sangraha_hin.txt", "source": "AI4Bharat Sangraha, verified subset", "license": "CC-BY-4.0", "date_acquired": "2026-07-24", "data_class": "public", "language": "hin"},
+    {"shard_id": "sangraha_eng", "path": "/home/azureuser/big/txt/sangraha_eng.txt", "source": "AI4Bharat Sangraha, verified subset", "license": "CC-BY-4.0", "date_acquired": "2026-07-24", "data_class": "public", "language": "eng"},
+    {"shard_id": "sangraha_ben", "path": "/home/azureuser/big/txt/sangraha_ben.txt", "source": "AI4Bharat Sangraha, verified subset", "license": "CC-BY-4.0", "date_acquired": "2026-07-24", "data_class": "public", "language": "ben"},
+    {"shard_id": "sangraha_tam", "path": "/home/azureuser/big/txt/sangraha_tam.txt", "source": "AI4Bharat Sangraha, verified subset", "license": "CC-BY-4.0", "date_acquired": "2026-07-24", "data_class": "public", "language": "tam"},
+    {"shard_id": "sangraha_tel", "path": "/home/azureuser/big/txt/sangraha_tel.txt", "source": "AI4Bharat Sangraha, verified subset", "license": "CC-BY-4.0", "date_acquired": "2026-07-24", "data_class": "public", "language": "tel"},
+    {"shard_id": "sangraha_mar", "path": "/home/azureuser/big/txt/sangraha_mar.txt", "source": "AI4Bharat Sangraha, verified subset", "license": "CC-BY-4.0", "date_acquired": "2026-07-24", "data_class": "public", "language": "mar"},
+    {"shard_id": "sangraha_mal", "path": "/home/azureuser/big/txt/sangraha_mal.txt", "source": "AI4Bharat Sangraha, verified subset", "license": "CC-BY-4.0", "date_acquired": "2026-07-24", "data_class": "public", "language": "mal"},
+    {"shard_id": "sangraha_guj", "path": "/home/azureuser/big/txt/sangraha_guj.txt", "source": "AI4Bharat Sangraha, verified subset", "license": "CC-BY-4.0", "date_acquired": "2026-07-24", "data_class": "public", "language": "guj"},
+    {"shard_id": "sangraha_kan", "path": "/home/azureuser/big/txt/sangraha_kan.txt", "source": "AI4Bharat Sangraha, verified subset", "license": "CC-BY-4.0", "date_acquired": "2026-07-24", "data_class": "public", "language": "kan"},
+    {"shard_id": "sangraha_urd", "path": "/home/azureuser/big/txt/sangraha_urd.txt", "source": "AI4Bharat Sangraha, verified subset", "license": "CC-BY-4.0", "date_acquired": "2026-08-08", "data_class": "public", "language": "urd"},
+    {"shard_id": "sangraha_pan", "path": "/home/azureuser/big/txt/sangraha_pan.txt", "source": "AI4Bharat Sangraha, verified subset", "license": "CC-BY-4.0", "date_acquired": "2026-08-08", "data_class": "public", "language": "pan"},
+    {"shard_id": "sangraha_ori", "path": "/home/azureuser/big/txt/sangraha_ori.txt", "source": "AI4Bharat Sangraha, verified subset", "license": "CC-BY-4.0", "date_acquired": "2026-08-08", "data_class": "public", "language": "ori"},
+    {"shard_id": "sangraha_nep", "path": "/home/azureuser/big/txt/sangraha_nep.txt", "source": "AI4Bharat Sangraha, verified subset", "license": "CC-BY-4.0", "date_acquired": "2026-08-08", "data_class": "public", "language": "nep"},
+    {"shard_id": "sangraha_san", "path": "/home/azureuser/big/txt/sangraha_san.txt", "source": "AI4Bharat Sangraha, verified subset", "license": "CC-BY-4.0", "date_acquired": "2026-08-08", "data_class": "public", "language": "san"},
+    {"shard_id": "sangraha_asm", "path": "/home/azureuser/big/txt/sangraha_asm.txt", "source": "AI4Bharat Sangraha, verified subset", "license": "CC-BY-4.0", "date_acquired": "2026-08-08", "data_class": "public", "language": "asm"}
+  ]
+}
