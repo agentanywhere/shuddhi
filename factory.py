@@ -90,6 +90,42 @@ def _load_shard(registry_path: str, shard_id: str):
     sys.exit(2)
 
 
+def cmd_attest(args) -> int:
+    """Attest a corpus produced by another tool.
+
+    Deliberately does NOT claim provenance it cannot observe: without
+    --registry every provenance field reports UNKNOWN, because a blank field
+    in a receipt reads as "nothing to declare".
+    """
+    import attest as attest_mod
+    meta = accepted = None
+    if args.registry:
+        meta, accepted, _refused = registry_mod.load_registry(args.registry)
+
+    scan_fn = None
+    if args.scan:
+        import pii as pii_mod
+        import toxicity as tox_mod
+        lex = tox_mod.ToxicityLexicon.builtin()
+
+        def scan_fn(doc: bytes) -> dict:
+            text = doc.decode("utf-8", "replace")
+            out = {f"pii:{k}": v for k, v in pii_mod.scan(text).items() if v}
+            t = lex.score(text)
+            if t.get("flagged"):
+                out["toxicity:flagged"] = 1
+            return out
+
+    att = attest_mod.attest_corpus(args.corpus, args.corpus_id, meta, accepted, scan_fn)
+    print(attest_mod.render_human(att))
+    out = args.out or os.path.join(args.corpus, "ATTESTATION.json")
+    with open(out, "w", encoding="utf-8") as f:
+        json.dump(att, f, indent=2, sort_keys=True)
+        f.write("\n")
+    print(f"\nwrote {out}")
+    return 0
+
+
 def cmd_report(args) -> int:
     """Draft the Article 53(1)(d) training-content summary.
 
@@ -983,6 +1019,17 @@ def main(argv=None) -> int:
                    help="BUILD-MANIFEST.json — binds the summary to a reproducible build")
     p.add_argument("--out", default=None, help="write here instead of stdout")
     p.set_defaults(fn=cmd_report)
+
+    p = sub.add_parser("attest",
+                       help="receipt for a corpus Shuddhi did not build (DataTrove, NeMo, Dolma, your own)")
+    p.add_argument("--corpus", required=True, help="directory of documents to attest")
+    p.add_argument("--corpus-id", required=True)
+    p.add_argument("--registry", default=None,
+                   help="optional: attest against declared provenance instead of UNKNOWN")
+    p.add_argument("--scan", action="store_true",
+                   help="also measure PII and toxicity across the corpus")
+    p.add_argument("--out", default=None, help="write ATTESTATION.json here")
+    p.set_defaults(fn=cmd_attest)
 
     p = sub.add_parser("plugins", help="list installed filter plugins")
     p.set_defaults(fn=cmd_plugins)
