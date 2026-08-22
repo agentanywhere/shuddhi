@@ -188,7 +188,7 @@ and the report states what was *not* measured.
 ```bash
 make help          # every task
 make doctor        # can this interpreter run the pipeline?
-make test          # 138 tests, no network, seconds
+make test          # 140 tests, no network, seconds
 make demo          # end-to-end on the sample corpus
 make docker-demo   # the same, inside the container
 ```
@@ -200,7 +200,7 @@ factory.py            CLI: doctor · check · run · merge · build · build-uni
                            attest · report · plugins · neardup-sig
                            neardup-merge · train-lm · extract
 *.py                  the stages (table above)
-tests/                138 tests, tiny fixtures
+tests/                140 tests, tiny fixtures
 examples/             sample corpus with planted defects, registry, lexicon
 scripts/demo.sh       the end-to-end demo
 configs/              shard registries
