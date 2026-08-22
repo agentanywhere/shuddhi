@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
-# Drive all 15 Sangraha shards through the factory on the LLM VM (2 cores):
+# Reference driver: run every shard of a registry through the full pipeline
+# on a 2-core machine. This is the script that produced the measurements in
+# docs/MEASURED-REPORT.md; adapt SHARDS and REG for your own corpus.
+#
 #   phase 1: per-language trigram LMs (perplexity proxy)
 #   phase 2: measurement runs (LID, quality, ppx, PII, dedup, contamination)
 #   phase 3: merge -> corpus MANIFEST
@@ -11,7 +14,7 @@ cd "$(dirname "$0")"
 
 OUT="${1:?usage: run_all.sh <out-dir> [extra args]}"
 shift || true
-REG="configs/tatva-sangraha-v1.json"
+REG="${REG:-configs/reference-sangraha.json}"
 
 python3 factory.py check --registry "$REG"
 
@@ -24,14 +27,14 @@ echo "== phase 1: language models =="
 echo "$SHARDS" | tr ' ' '\n' | xargs -P 2 -I{} sh -c '
   lang="${1#sangraha_}"
   [ -f "lms/${lang}.lm.gz" ] && { echo "  lms/${lang}.lm.gz exists, skip"; exit 0; }
-  python3 factory.py train-lm --registry configs/tatva-sangraha-v1.json --shard "$1" --lm-dir lms
+  python3 factory.py train-lm --registry "${REG:-configs/reference-sangraha.json}" --shard "$1" --lm-dir lms
 ' _ {}
 
 echo "== phase 2: measurement =="
 for s in $SHARDS; do echo "$s"; done | xargs -P 2 -I{} sh -c '
   shard="$1"; out="$2"; shift 2
   lang="${shard#sangraha_}"
-  python3 factory.py run --registry configs/tatva-sangraha-v1.json --shard "$shard" --out "$out" \
+  python3 factory.py run --registry "${REG:-configs/reference-sangraha.json}" --shard "$shard" --out "$out" \
     --eval-set eval-set.jsonl \
     --fasttext-model lid.176.ftz \
     --tokenizer tokenizer.json \

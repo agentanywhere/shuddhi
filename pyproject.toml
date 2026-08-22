@@ -3,8 +3,26 @@ name = "tatva-data-factory"
 version = "1.2.0"
 description = "Receipts-first dataset cleansing engine: provenance-gated ingest, reproducible corpus build hashes, chained filtered builds (public product name: Shuddhi)"
 requires-python = ">=3.10"
-license = { text = "Proprietary" }  # OSS license decision pending — see portfolio/DATA-FACTORY-OSS-PLAN.md
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+readme = "README.md"
+authors = [{ name = "ShepHertz Technologies" }]
+keywords = ["dataset", "corpus", "deduplication", "provenance", "llm", "training-data", "indic"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Programming Language :: Python :: 3 :: Only",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+  "Topic :: Text Processing :: Linguistic",
+]
 dependencies = ["numpy>=1.24"]
+
+[project.urls]
+Documentation = "https://github.com/REPLACE_ME/shuddhi/tree/main/docs"
+Source = "https://github.com/REPLACE_ME/shuddhi"
+Issues = "https://github.com/REPLACE_ME/shuddhi/issues"
 
 [project.optional-dependencies]
 lid = ["fasttext-predict"]
@@ -26,5 +44,5 @@ build-backend = "setuptools.build_meta"
 py-modules = [
   "factory", "registry", "shards", "dedup", "neardup", "lid", "quality",
   "domain", "contamination", "tokens", "ngram_lm", "pii", "toxicity",
-  "extract", "builder", "build_eval_set",
+  "extract", "builder", "build_eval_set", "plugins", "tokenizer_lab",
 ]
