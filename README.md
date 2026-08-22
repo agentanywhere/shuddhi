@@ -51,6 +51,7 @@ No Docker? `make venv` or `make conda`, then `./scripts/demo.sh`.
 | **[Docker](docs/DOCKER.md)** | mounts, compose, CI usage |
 | **[Troubleshooting](docs/TROUBLESHOOTING.md)** | when something goes wrong |
 | **[FAQ](docs/FAQ.md)** | how it differs from other curation pipelines, and what it does not do |
+| **[Extending](docs/EXTENDING.md)** | write a filter plugin; how custom filters stay inside the receipt |
 | [Engine internals](docs/ENGINE-INTERNALS.md) | stage-by-stage implementation notes |
 | [Measured report](docs/MEASURED-REPORT.md) | the full 176 GB run, with coverage on every number |
 | [Tokenizer study](docs/TOKENIZER-V2.md) | companion tokenizer measurement and decision |
@@ -90,6 +91,7 @@ by parallelism. No signature to trust, no server to ask.
 | Applied-filter builds with chained hashes | `builder.py` |
 | HTML → shard extraction | `extract.py` |
 | Tokenizer train/eval lab | `tokenizer_lab.py` |
+| **Filter plugin API** — third-party/commercial filters, no fork, identity in the receipt | `plugins.py` |
 
 CPU-only throughout. No GPU, no cluster, no network calls.
 
