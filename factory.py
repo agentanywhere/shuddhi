@@ -90,6 +90,28 @@ def _load_shard(registry_path: str, shard_id: str):
     sys.exit(2)
 
 
+def cmd_plugins(args) -> int:
+    import plugins as plugins_mod
+
+    found = plugins_mod.available()
+    if not found:
+        print("no filter plugins installed.\n"
+              f"Plugins register under the '{plugins_mod.ENTRY_POINT_GROUP}' "
+              "entry-point group; see plugins.py and examples/plugin/.")
+        return 0
+    print(f"{len(found)} filter plugin(s) installed:")
+    for name in sorted(found):
+        try:
+            inst = plugins_mod.load([name])[0]
+            print(f"  {name}  v{inst.version}")
+            for k, v in inst.identity().items():
+                print(f"      {k}: {v}")
+        except Exception as e:
+            print(f"  {name}  [BROKEN: {e}]")
+    print("\nEnable with: factory.py build ... --plugin <name>")
+    return 0
+
+
 def cmd_doctor(args) -> int:
     """Report whether this interpreter can run the pipeline, and what is
     missing. Exists because the most common failure by far is running
@@ -476,6 +498,14 @@ def cmd_build(args) -> int:
 
         neardup_drop = load_droplist(args.neardup_drop)
         neardup_sha = droplist_sha256(args.neardup_drop)
+    plugin_objs = []
+    if args.plugin:
+        import plugins as plugins_mod
+
+        plugin_objs = plugins_mod.load(args.plugin)
+        for po in plugin_objs:
+            print(f"  filter plugin: {po.name} {po.version}", flush=True)
+
     tox_lexicon = None
     if args.toxicity:
         from toxicity import ToxicityLexicon
@@ -497,6 +527,8 @@ def cmd_build(args) -> int:
         drop_contaminated=bool(args.eval_set),
         neardup_droplist_sha256=neardup_sha,
         toxicity_lexicon_sha256=tox_lexicon.sha256 if tox_lexicon else "",
+        plugin_identities=(__import__("plugins").identities(plugin_objs)
+                           if plugin_objs else []),
     )
     eval_index = None
     if args.eval_set:
@@ -515,7 +547,8 @@ def cmd_build(args) -> int:
         )
         r = build_shard(s, index, cfg, lm=lms.get(s.language),
                         eval_index=eval_index, emit_path=emit_path,
-                        neardup_drop=neardup_drop, tox_lexicon=tox_lexicon)
+                        neardup_drop=neardup_drop, tox_lexicon=tox_lexicon,
+                        plugins=plugin_objs)
         kept = r.pop("kept_hashes")
         kept.tofile(os.path.join(args.build_out, f"{s.shard_id}.kept.u64"))
         kept_arrays.append(kept)
@@ -524,9 +557,10 @@ def cmd_build(args) -> int:
 
     fbh = filtered_build_hash(kept_arrays)
     total_kept = int(sum(a.size for a in kept_arrays))
+    all_reasons = list(DROP_REASONS) + [f"plugin:{p.name}" for p in plugin_objs]
     dropped_by_reason = {
-        reason: sum(r["dropped"][reason] for r in per_shard.values())
-        for reason in DROP_REASONS
+        reason: sum(r["dropped"].get(reason, 0) for r in per_shard.values())
+        for reason in all_reasons
     }
     build_manifest = {
         "build_manifest_version": 1,
@@ -597,7 +631,7 @@ def cmd_build_union(args) -> int:
     for _, m in parts:
         fc = m["filter_config"]
         for key in ("min_quality", "pii_policy", "drop_contaminated", "scorer_params",
-                    "neardup_droplist_sha256", "toxicity_lexicon_sha256"):
+                    "neardup_droplist_sha256", "toxicity_lexicon_sha256", "plugins"):
             if fc.get(key) != base["filter_config"].get(key):
                 print(f"partition filter configs disagree on {key} — refusing to union",
                       file=sys.stderr)
@@ -618,6 +652,7 @@ def cmd_build_union(args) -> int:
         drop_contaminated=base["filter_config"]["drop_contaminated"],
         neardup_droplist_sha256=base["filter_config"].get("neardup_droplist_sha256", ""),
         toxicity_lexicon_sha256=base["filter_config"].get("toxicity_lexicon_sha256", ""),
+        plugin_identities=base["filter_config"].get("plugins", []),
     )
     union_fc = json.loads(union_cfg.canonical())
     if union_fc["scorer_params"] != base["filter_config"]["scorer_params"]:
@@ -909,7 +944,13 @@ def main(argv=None) -> int:
                    help="drop documents flagged by the toxicity lexicon")
     p.add_argument("--toxicity-lexicon-dir", default="",
                    help="dir of <lang>.txt lexicons merged with the builtin starter")
+    p.add_argument("--plugin", action="append", default=[], metavar="NAME",
+                   help="enable an installed filter plugin (repeatable); its "
+                        "identity enters the filter config sha. See plugins.py")
     p.set_defaults(fn=cmd_build)
+
+    p = sub.add_parser("plugins", help="list installed filter plugins")
+    p.set_defaults(fn=cmd_plugins)
 
     p = sub.add_parser("neardup-sig", help="MinHash-sign every document of one shard")
     p.add_argument("--registry", required=True)
