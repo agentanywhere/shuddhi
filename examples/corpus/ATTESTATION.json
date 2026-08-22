@@ -1,0 +1,40 @@
+{
+  "attestation_version": 1,
+  "bytes": 25285,
+  "content_scan": null,
+  "corpus_build_hash": "4e419991c72da45e81b281857ec7950784ba4ed1f23734eee1334dc2d95eaaa0",
+  "corpus_id": "readme-check",
+  "documents": 45,
+  "exact_duplicate_rate": 0.022222,
+  "files": [
+    {
+      "bytes": 251,
+      "docs": 3,
+      "path": "customer_export.txt"
+    },
+    {
+      "bytes": 13537,
+      "docs": 31,
+      "path": "sample_eng.txt"
+    },
+    {
+      "bytes": 11497,
+      "docs": 11,
+      "path": "sample_hin.txt"
+    }
+  ],
+  "generated_utc": "2026-08-22T19:34:20Z",
+  "hash_definition": "blake2b-256 over the ascending-sorted set of blake2b-8 document hashes \u2014 the identical definition a native Shuddhi build uses, so an attested corpus and a built corpus are directly comparable.",
+  "limitations": [
+    "Attestation proves CONTENT, not ACQUISITION. This receipt binds a corpus to a hash and reports what is inside it; it does not and cannot establish where the data came from, under what licence, or whether any rights-holder opted out.",
+    "Upstream tool statistics, where present, are CITED and never verified. Shuddhi did not observe the upstream run.",
+    "Absence of a finding is not proof of absence. Personal-data detection is pattern-based; toxicity screening is lexicon-tier."
+  ],
+  "provenance": {
+    "detail": "No registry supplied. Source, licence, data class and acquisition date are unknown to this attestation. Re-run with --registry to attest against declared, refusal-checked provenance records.",
+    "sources": null,
+    "status": "UNKNOWN"
+  },
+  "unique_documents": 44,
+  "upstream": null
+}
