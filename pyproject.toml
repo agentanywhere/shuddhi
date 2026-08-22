@@ -20,9 +20,9 @@ classifiers = [
 dependencies = ["numpy>=1.24"]
 
 [project.urls]
-Documentation = "https://github.com/REPLACE_ME/shuddhi/tree/main/docs"
-Source = "https://github.com/REPLACE_ME/shuddhi"
-Issues = "https://github.com/REPLACE_ME/shuddhi/issues"
+Documentation = "https://github.com/agentanywhere/shuddhi/tree/main/docs"
+Source = "https://github.com/agentanywhere/shuddhi"
+Issues = "https://github.com/agentanywhere/shuddhi/issues"
 
 [project.optional-dependencies]
 lid = ["fasttext-predict"]

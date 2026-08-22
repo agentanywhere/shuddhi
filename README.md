@@ -12,7 +12,7 @@ does not depend on anyone's memory. That is what this produces.
 
 Internally the engine is the **Tatva Data Factory**; Shuddhi is the product.
 
-[![CI](https://github.com/REPLACE_ME/shuddhi/actions/workflows/ci.yml/badge.svg)](https://github.com/REPLACE_ME/shuddhi/actions/workflows/ci.yml)
+[![CI](https://github.com/agentanywhere/shuddhi/actions/workflows/ci.yml/badge.svg)](https://github.com/agentanywhere/shuddhi/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
 
