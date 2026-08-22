@@ -1,0 +1,142 @@
+{
+  "registry_version": 1,
+  "corpus_id": "tatva-sangraha-v1",
+  "_comment": "The registry used for the reference corpus measured in docs/MEASURED-REPORT.md: the AI4Bharat Sangraha verified subset (CC-BY-4.0), extracted to one plain-text file per language. Paths are placeholders — point them at your own extraction to reproduce the run.",
+  "shards": [
+    {
+      "shard_id": "sangraha_hin",
+      "path": "/path/to/corpus/sangraha_hin.txt",
+      "source": "AI4Bharat Sangraha, verified subset",
+      "license": "CC-BY-4.0",
+      "date_acquired": "2026-07-24",
+      "data_class": "public",
+      "language": "hin"
+    },
+    {
+      "shard_id": "sangraha_eng",
+      "path": "/path/to/corpus/sangraha_eng.txt",
+      "source": "AI4Bharat Sangraha, verified subset",
+      "license": "CC-BY-4.0",
+      "date_acquired": "2026-07-24",
+      "data_class": "public",
+      "language": "eng"
+    },
+    {
+      "shard_id": "sangraha_ben",
+      "path": "/path/to/corpus/sangraha_ben.txt",
+      "source": "AI4Bharat Sangraha, verified subset",
+      "license": "CC-BY-4.0",
+      "date_acquired": "2026-07-24",
+      "data_class": "public",
+      "language": "ben"
+    },
+    {
+      "shard_id": "sangraha_tam",
+      "path": "/path/to/corpus/sangraha_tam.txt",
+      "source": "AI4Bharat Sangraha, verified subset",
+      "license": "CC-BY-4.0",
+      "date_acquired": "2026-07-24",
+      "data_class": "public",
+      "language": "tam"
+    },
+    {
+      "shard_id": "sangraha_tel",
+      "path": "/path/to/corpus/sangraha_tel.txt",
+      "source": "AI4Bharat Sangraha, verified subset",
+      "license": "CC-BY-4.0",
+      "date_acquired": "2026-07-24",
+      "data_class": "public",
+      "language": "tel"
+    },
+    {
+      "shard_id": "sangraha_mar",
+      "path": "/path/to/corpus/sangraha_mar.txt",
+      "source": "AI4Bharat Sangraha, verified subset",
+      "license": "CC-BY-4.0",
+      "date_acquired": "2026-07-24",
+      "data_class": "public",
+      "language": "mar"
+    },
+    {
+      "shard_id": "sangraha_mal",
+      "path": "/path/to/corpus/sangraha_mal.txt",
+      "source": "AI4Bharat Sangraha, verified subset",
+      "license": "CC-BY-4.0",
+      "date_acquired": "2026-07-24",
+      "data_class": "public",
+      "language": "mal"
+    },
+    {
+      "shard_id": "sangraha_guj",
+      "path": "/path/to/corpus/sangraha_guj.txt",
+      "source": "AI4Bharat Sangraha, verified subset",
+      "license": "CC-BY-4.0",
+      "date_acquired": "2026-07-24",
+      "data_class": "public",
+      "language": "guj"
+    },
+    {
+      "shard_id": "sangraha_kan",
+      "path": "/path/to/corpus/sangraha_kan.txt",
+      "source": "AI4Bharat Sangraha, verified subset",
+      "license": "CC-BY-4.0",
+      "date_acquired": "2026-07-24",
+      "data_class": "public",
+      "language": "kan"
+    },
+    {
+      "shard_id": "sangraha_urd",
+      "path": "/path/to/corpus/sangraha_urd.txt",
+      "source": "AI4Bharat Sangraha, verified subset",
+      "license": "CC-BY-4.0",
+      "date_acquired": "2026-08-08",
+      "data_class": "public",
+      "language": "urd"
+    },
+    {
+      "shard_id": "sangraha_pan",
+      "path": "/path/to/corpus/sangraha_pan.txt",
+      "source": "AI4Bharat Sangraha, verified subset",
+      "license": "CC-BY-4.0",
+      "date_acquired": "2026-08-08",
+      "data_class": "public",
+      "language": "pan"
+    },
+    {
+      "shard_id": "sangraha_ori",
+      "path": "/path/to/corpus/sangraha_ori.txt",
+      "source": "AI4Bharat Sangraha, verified subset",
+      "license": "CC-BY-4.0",
+      "date_acquired": "2026-08-08",
+      "data_class": "public",
+      "language": "ori"
+    },
+    {
+      "shard_id": "sangraha_nep",
+      "path": "/path/to/corpus/sangraha_nep.txt",
+      "source": "AI4Bharat Sangraha, verified subset",
+      "license": "CC-BY-4.0",
+      "date_acquired": "2026-08-08",
+      "data_class": "public",
+      "language": "nep"
+    },
+    {
+      "shard_id": "sangraha_san",
+      "path": "/path/to/corpus/sangraha_san.txt",
+      "source": "AI4Bharat Sangraha, verified subset",
+      "license": "CC-BY-4.0",
+      "date_acquired": "2026-08-08",
+      "data_class": "public",
+      "language": "san"
+    },
+    {
+      "shard_id": "sangraha_asm",
+      "path": "/path/to/corpus/sangraha_asm.txt",
+      "source": "AI4Bharat Sangraha, verified subset",
+      "license": "CC-BY-4.0",
+      "date_acquired": "2026-08-08",
+      "data_class": "public",
+      "language": "asm"
+    }
+  ]
+}

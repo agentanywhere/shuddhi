@@ -1,9 +1,10 @@
 # Tatva Data Factory v1 — engine + first honest composition report
 
-*2026-08-10. Engine: `ops/data-factory/` (60 unit tests). Run artefacts:
-`ops/data-factory/runs/tatva-sangraha-v1/` (manifest + per-shard stats,
-committed) and Blob `agentanywhere/tatva/data-factory-v1/out-v2-20260810.tgz`
-(264,038,056 bytes, byte-verified — includes the full doc-hash arrays).*
+*The first production run of this engine, over a real 176 GB corpus. Every
+number below is measured, and every number carries its coverage. The
+manifests and per-shard statistics that produced these tables are committed
+in `runs/`, so the tables can be checked against the receipts rather than
+taken on trust.*
 
 ## What this is
 
@@ -149,9 +150,8 @@ Sangraha.**
 Entire measurement ran on the existing 2-vCPU Azure LLM VM (where the corpus
 lives), CPU-only: **~54 CPU-minutes per full pass** (~28 min wall with 2
 workers, ~50–55 MB/s/core sustained), two passes total. **Zero GPU-hours,
-zero Blob egress** for the corpus (the engine went to the data); ~264 MB of
-artefacts uploaded to Blob as backup. Marginal cost: effectively the VM's
-idle time.
+no egress** for the corpus — the engine went to the data rather than the
+other way round. Marginal cost: effectively the machine's idle time.
 
 ## Reusing the engine (any future corpus)
 
@@ -224,7 +224,7 @@ as design verification, not as a discovery. Contamination moving from
   cutoff maps are now partition-invariant. The refusal was the integrity
   design doing its job.
 - Compute: measurement ~54 CPU-min; the applied build ~18.8 CPU-hours
-  (2 × 9.4 h partitions) on the same 2-vCPU VM. Zero GPU, zero Blob egress.
+  (2 × 9.4 h partitions) on the same 2-vCPU machine. Zero GPU, zero egress.
 - Emission demo: the asm shard materialized end-to-end (`--emit text`) —
   324,558 of 328,504 docs kept (3,944 ppx, 2 quality), 1,057 PII spans
   redacted, 2.37 GB written, output receipt sha256 `5bcd95f6a5eaf6a4…`.
