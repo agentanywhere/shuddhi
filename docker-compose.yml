@@ -1,0 +1,15 @@
+# Shuddhi via docker compose.
+#
+#   docker compose run --rm shuddhi doctor      # verify the image
+#   docker compose run --rm shuddhi demo        # sample-corpus pipeline
+#   docker compose run --rm shuddhi check --registry /work/registry.json
+#
+# ./data on the host is mounted at /work in the container: put your corpus
+# and registry there, and every output lands back on the host.
+services:
+  shuddhi:
+    build: .
+    image: shuddhi:latest
+    volumes:
+      - ./data:/work
+    working_dir: /work

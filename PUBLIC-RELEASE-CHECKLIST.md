@@ -13,6 +13,20 @@ and when) lives in `DATA-FACTORY-OSS-PLAN.md` in the ai-adi-llm portfolio.
 | `runs/**` manifests | fine to publish *if* we want the receipts public (they are our proof), but they name internal shard paths | either scrub the `path` fields or keep runs/ private and link the published report instead |
 | git history | this repo's history is clean (fresh-history extraction), so a normal push is safe — do NOT ever mirror ai-adi-llm | — |
 
+## Already done (2026-08-13)
+
+- Documentation set: Quickstart, User Guide, CLI Reference, Docker,
+  Troubleshooting, FAQ — all links verified.
+- `examples/` — sample corpus with planted defects, registry, eval set and
+  toxicity lexicon; `scripts/demo.sh` runs the whole pipeline in seconds and
+  is public-safe (synthetic text, CC0, placeholder "toxic" terms rather than
+  slurs).
+- Docker image + compose + `Makefile`; `requirements.txt` and
+  `environment.yml` for venv and conda.
+- `factory.py doctor` for environment diagnosis.
+- `.dockerignore` already excludes `eval-set.jsonl`, so the internal
+  benchmark material is not baked into images.
+
 ## Must add
 
 - **LICENSE** — Apache-2.0 is the proposal; not yet applied because the
@@ -34,9 +48,9 @@ and when) lives in `DATA-FACTORY-OSS-PLAN.md` in the ai-adi-llm portfolio.
   NER-class PII, the toxicity classifier tier, compliance reporting packs,
   multi-node orchestration. Features drift into OSS one PR at a time if the
   boundary is not written down first.
-- **Naming.** The repo slug is currently `ai-shudhi-data-factory` — note the
-  product is transliterated **Shuddhi** (शुद्धि, double d). Fix the slug
-  before it is public and permanent.
+- **Naming.** Slug corrected to `ai-shuddhi-data-factory` on 2026-08-13.
+  Decide whether the public repo keeps the product name (with trademark
+  guidelines) or ships under a neutral engine name.
 - **Maintenance owner.** An unmaintained repo is worse than no repo.
 
 ## Sanity gate before pushing public
