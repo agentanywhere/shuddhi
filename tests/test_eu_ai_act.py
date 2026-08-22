@@ -157,3 +157,39 @@ def test_runs_against_the_shipped_example_registry():
     assert len(refused) >= 1
     assert "Data excluded at admission" in out
     assert "customer" in out.lower()
+
+
+# ------------------------------------------------- wrong-manifest handling --
+
+def test_corpus_manifest_is_not_reported_as_a_measured_zero():
+    """The two manifests are easy to confuse — both are called a manifest and
+    both live in runs/. A corpus manifest (from `run`) records no filter pass,
+    so reporting "Documents retained: 0" from one would put a number in a
+    regulatory filing that nothing ever measured."""
+    corpus_manifest = {
+        "manifest_version": 1,
+        "corpus_id": "tatva-sangraha-v1",
+        "corpus_build_hash": "e" * 64,
+        "shards": [],
+    }
+    out = _summary(manifest=corpus_manifest)
+    assert "Documents retained: **0**" not in out
+    assert "0 redactions" not in out
+    assert "corpus manifest was supplied" in out
+    assert "GAP" in out
+    # the hash it DOES legitimately carry should still be reported
+    assert "e" * 64 in out
+
+
+def test_filtered_build_manifest_still_reports_its_numbers():
+    """The guard must not suppress a genuine filtered build."""
+    out = _summary(manifest={
+        "parent_corpus_build_hash": "b" * 64,
+        "filtered_build_hash": "c" * 64,
+        "filter_config_sha256": "d" * 64,
+        "kept_docs": 999,
+        "pii_redactions": 7,
+    })
+    assert "c" * 64 in out
+    assert "999" in out
+    assert "corpus manifest was supplied" not in out

@@ -76,6 +76,17 @@ def _fmt_int(n: int) -> str:
     return f"{n:,}"
 
 
+# The fields that only a filtered build (`factory.py build`) can produce. A
+# corpus manifest from `factory.py run` carries none of them, and the two are
+# easy to confuse because both are called a manifest and both sit in runs/.
+FILTERED_BUILD_KEYS = ("filtered_build_hash", "kept_docs")
+
+
+def _is_filtered_build(manifest: dict) -> bool:
+    """True only for a manifest that actually describes a filter pass."""
+    return any(k in manifest for k in FILTERED_BUILD_KEYS)
+
+
 def build_summary(meta: dict, accepted: list, refused: list,
                   manifest: dict | None = None) -> str:
     """Render the draft Article 53 summary as Markdown.
@@ -222,7 +233,7 @@ def build_summary(meta: dict, accepted: list, refused: list,
 
     L.append("### Provenance and verifiability")
     L.append("")
-    if manifest:
+    if manifest and _is_filtered_build(manifest):
         L.append(f"- Corpus build hash: `{manifest.get('parent_corpus_build_hash', '')}`")
         L.append(f"- Filtered build hash: `{manifest.get('filtered_build_hash', '')}`")
         L.append(f"- Filter configuration: `sha256:{manifest.get('filter_config_sha256', '')}`")
@@ -232,6 +243,25 @@ def build_summary(meta: dict, accepted: list, refused: list,
                  "and the filter-configuration hash, so the summary above is bound "
                  "to a specific, reproducible artefact. Re-running the same "
                  "configuration over the same corpus reproduces the same hash.")
+    elif manifest:
+        # A corpus manifest (from `run`), not a filtered build manifest (from
+        # `build`). It identifies the accepted corpus but records nothing about
+        # what a filter pass kept or dropped. Reporting those absent fields as
+        # 0 or "" would state a measured zero that was never measured — the
+        # exact failure this module exists to prevent — so name the artefact
+        # we got and ask for the other one.
+        cbh = manifest.get("corpus_build_hash", "")
+        if cbh:
+            L.append(f"- Corpus build hash: `{cbh}`")
+            L.append("")
+        L.append("**GAP — a corpus manifest was supplied, not a filtered build "
+                 "manifest.** It identifies the accepted corpus but records no "
+                 "filter pass, so documents retained, redaction counts and the "
+                 "filtered build hash are unknown here and are deliberately not "
+                 "reported as zero. Pass the `BUILD-MANIFEST.json` written by "
+                 "`factory.py build` to bind this summary to a filtered build.")
+        gaps.append("Block 3: filtered build manifest (documents retained, "
+                    "redactions, filtered build hash)")
     else:
         L.append("*(No build manifest supplied — pass `--manifest "
                  "BUILD-MANIFEST.json` to bind this summary to a specific, "
