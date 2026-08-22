@@ -63,6 +63,25 @@ ATTESTATION_VERSION = 1
 
 TEXT_SUFFIXES = (".txt", ".jsonl", ".json", ".md")
 
+# Receipts and manifests that sit *inside* a corpus directory but are not part
+# of the corpus. Excluding them is a correctness requirement, not tidiness:
+#
+#   * Our own default writes ATTESTATION.json into the attested directory. Left
+#     in, a second attestation would count the first as a document and return a
+#     different hash — destroying the reproducibility the receipt exists to
+#     assert.
+#   * The upstream manifests _upstream_manifest() looks for are metadata about
+#     a corpus, not text the model would ever see. Counting DataTrove's
+#     stats.json as a training document would silently overstate the corpus.
+EXCLUDED_FILENAMES = frozenset({
+    "attestation.json",
+    "build-manifest.json",
+    "manifest.json",
+    "stats.json",
+    "processing_stats.json",
+    "metadata.json",
+})
+
 
 def _corpus_files(root: str, suffixes=TEXT_SUFFIXES) -> list[str]:
     """Every attestable file under root, in a deterministic order.
@@ -74,6 +93,8 @@ def _corpus_files(root: str, suffixes=TEXT_SUFFIXES) -> list[str]:
     for dirpath, dirnames, filenames in os.walk(root):
         dirnames.sort()
         for fn in sorted(filenames):
+            if fn.lower() in EXCLUDED_FILENAMES:
+                continue
             if fn.lower().endswith(suffixes):
                 found.append(os.path.join(dirpath, fn))
     return sorted(found)
