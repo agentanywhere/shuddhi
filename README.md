@@ -1,102 +1,141 @@
 # Shuddhi (शुद्धि) — Data Factory
 
 **A receipts-first data factory for sovereign AI.** Shuddhi turns raw text
-shards into a *filtered corpus build with a verifiable identity*: every
-accepted document is content-hashed, every shard carries source/license/date
-provenance, every filter threshold is pinned, and the whole build collapses
-into one citable hash that a training run quotes in its ledger.
+into a filtered corpus *with a verifiable identity*: every document is
+content-hashed, every shard carries provenance, every filter threshold is
+pinned, and the whole build collapses into one hash that a training run
+cites in its ledger.
+
+Six months after a training run, "which documents did this model see, and
+can you prove the customer data was excluded?" should have an answer that
+does not depend on anyone's memory. That is what this produces.
 
 Internally the engine is the **Tatva Data Factory**; Shuddhi is the product.
 
-> **Status: private.** This repository is internal (Bitbucket). The plan is to
-> extract an open core to GitHub when the launch is right — see
-> `PUBLIC-RELEASE-CHECKLIST.md`, which lists exactly what must change first
-> (the eval set and VM-path configs must NOT ship publicly).
+> **Status: private.** Internal repository. An open-core extraction to GitHub
+> is planned but not decided — see `PUBLIC-RELEASE-CHECKLIST.md`.
+
+---
+
+## Try it in one minute
+
+```bash
+docker build -t shuddhi .
+docker run --rm shuddhi demo
+```
+
+That runs the complete pipeline over a bundled sample corpus with
+deliberately planted defects, so every filter visibly catches something:
+
+```
+kept 34 of 42 documents; 5 PII spans redacted
+dropped by reason: {'exact_dup': 1, 'near_dup': 2, 'quality': 1,
+                    'perplexity': 2, 'toxicity': 1, 'contamination': 1, 'pii': 0}
+refused at the gate: ['customer_export']
+```
+
+Run it twice: the hashes do not change. Run it on macOS, in a venv, and in
+the container: the hashes still do not change.
+
+No Docker? `make venv` or `make conda`, then `./scripts/demo.sh`.
+
+---
+
+## Documentation
+
+| | |
+|---|---|
+| **[Quickstart](docs/QUICKSTART.md)** | install, see it work, run it on your own corpus |
+| **[User Guide](docs/USER-GUIDE.md)** | every stage, what it measures, how to tune it |
+| **[CLI Reference](docs/CLI-REFERENCE.md)** | every command, flag, and exit code |
+| **[Docker](docs/DOCKER.md)** | mounts, compose, CI usage |
+| **[Troubleshooting](docs/TROUBLESHOOTING.md)** | when something goes wrong |
+| **[FAQ](docs/FAQ.md)** | how it differs from other curation pipelines, and what it does not do |
+| [Engine internals](docs/ENGINE-INTERNALS.md) | stage-by-stage implementation notes |
+| [Measured report](docs/MEASURED-REPORT.md) | the full 176 GB run, with coverage on every number |
+| [Tokenizer study](docs/TOKENIZER-V2.md) | companion tokenizer measurement and decision |
+
+---
 
 ## The receipts chain
 
 ```
-registry (source · license · date · data_class, per shard)
-  → corpus_build_hash      content hash of the accepted document set
-  → filter_config_sha      every threshold + the droplist/lexicon shas
-  → filtered_build_hash    chained to both; the thing training cites
-  → tokenizer sha          recorded alongside in the run ledger
+registry              source · licence · date · data_class, per shard
+   │                  (customer-class data refused here, in code, no override)
+   ├─► corpus_build_hash     content hash of the accepted document set
+   ├─► filter_config_sha     every threshold + droplist + lexicon shas
+   └─► filtered_build_hash   chained to both — the string training cites
 ```
 
-Reproducible by construction: the same raw files and the same config yield
-the same hashes on any machine. Ours were reproduced across four independent
-full passes of a 176 GB corpus.
+Order-independent, recomputable by anyone holding the shards, and unchanged
+by parallelism. No signature to trust, no server to ask.
+
+---
 
 ## What it does
 
 | stage | module |
 |---|---|
-| Provenance gate — **customer-class data refused in code, no override** | `registry.py` |
-| Streaming shard ingest, document hashing, shard SHA-256 | `shards.py` |
+| Provenance gate — customer-class data refused before the file is opened | `registry.py` |
+| Streaming ingest, document hashing, shard SHA-256 | `shards.py` |
 | Exact dedup (full corpus) | `dedup.py` |
-| Near-dup — MinHash/LSH, disk-backed, deterministic exemplar | `neardup.py` |
-| Language ID (fastText lid.176, script fallback) | `lid.py` |
+| Near-dup — MinHash/LSH, disk-backed, order-independent exemplar | `neardup.py` |
+| Language ID — fastText lid.176, Unicode-script fallback | `lid.py` |
 | Quality heuristics | `quality.py` |
-| Perplexity proxy (per-language char-trigram LM) | `ngram_lm.py` |
-| Toxicity screen (lexicon tier, pluggable lists) | `toxicity.py` |
-| PII scan + redact (email/phone/Aadhaar/PAN/Luhn cards/IP) | `pii.py` |
-| Domain classifier (coding/bfsi/reasoning/indic/general) | `domain.py` |
-| Contamination screen vs eval sets | `contamination.py` |
-| Applied-filter builds + chained hash | `builder.py` |
+| Perplexity proxy — per-language char-trigram LM | `ngram_lm.py` |
+| Toxicity — lexicon tier, pluggable and sha-pinned | `toxicity.py` |
+| PII — scan and redact (email/phone/Aadhaar/PAN/Luhn cards/IP) | `pii.py` |
+| Domain classification | `domain.py` |
+| Contamination screen against your eval sets | `contamination.py` |
+| Applied-filter builds with chained hashes | `builder.py` |
 | HTML → shard extraction | `extract.py` |
 | Tokenizer train/eval lab | `tokenizer_lab.py` |
 
-The provenance gate is the load-bearing guarantee: a shard that is untagged,
-carries an unknown `data_class`, or is tagged `customer` / `customer-derived`
-/ `evaluation-only` is refused **before its file is opened**, with no flag,
-env var, or config field that can admit it. Unit-tested from five directions.
+CPU-only throughout. No GPU, no cluster, no network calls.
 
-## Quickstart
+---
 
-```bash
-pip install -e ".[lid,tokens,extract,dev]"
-python3 -m pytest tests/ -q                      # 102 tests, no network
+## Proven at scale
 
-python3 factory.py check --registry configs/<registry>.json      # provenance gate
-python3 factory.py run   --registry configs/<registry>.json \
-    --shard <id> --out out/ --eval-set eval-set.jsonl \
-    --fasttext-model lid.176.ftz --tokenizer tokenizer.json
-python3 factory.py merge --registry configs/<registry>.json --out out/
-python3 factory.py build --registry configs/<registry>.json \
-    --run-dir out/ --build-out build/ --pii redact --toxicity
-```
-
-`docs/ENGINE-INTERNALS.md` documents every stage, flag, and the full-pass vs
-sampled distinction. Builds parallelize by partition and the build hash is
-provably unchanged by partitioning (`factory.py build-union`).
-
-## Measured on a real corpus
-
-Full results: `docs/MEASURED-REPORT.md`. Headline, from the 176 GB / 33.05M
-document Tatva corpus on **one 2-vCPU box, zero GPU**:
+From the reference run — 176.1 GB, 33,047,370 documents, 15 languages, on a
+single 2-vCPU box:
 
 | | |
 |---|---|
-| corpus build hash | `5e8fbb96…` (reproduced ×4) |
-| filtered build hash | `a532e4ed…` — 32,289,800 docs kept (97.71%) |
+| corpus build hash | `5e8fbb96…`, reproduced across **four** independent full passes |
+| filtered build hash | `a532e4ed…` — 32,289,800 documents kept (97.71%) |
 | dropped | 0.38% exact-dup · 0.83% near-dup · 1.05% perplexity · 0.02% quality · 0.016% toxicity |
-| contamination | 0, verified on every document |
+| contamination | 0, verified on **every** document |
 | PII | 182,781 spans redacted |
+| largest near-dup cluster | one template repeated 84,275 times |
 
-Claims discipline is part of the product: every number carries its coverage
-(full-pass vs sampled vs derived), and the report states what was *not*
-measured. `docs/TOKENIZER-V2.md` is the companion tokenizer study.
+Full detail, with coverage labelled on every number, in the
+[measured report](docs/MEASURED-REPORT.md). Claims discipline is part of the
+product: full-pass, sampled, and derived figures are never mixed silently,
+and the report states what was *not* measured.
 
-## Repo map
+---
+
+## Development
+
+```bash
+make help          # every task
+make doctor        # can this interpreter run the pipeline?
+make test          # 102 tests, no network, seconds
+make demo          # end-to-end on the sample corpus
+make docker-demo   # the same, inside the container
+```
+
+Repo layout:
 
 ```
-factory.py            CLI: check · run · merge · build · build-union
+factory.py            CLI: doctor · check · run · merge · build · build-union
                            neardup-sig · neardup-merge · train-lm · extract
 *.py                  the stages (table above)
-tests/                102 tests, tiny fixtures, no network
-configs/              shard registries (INTERNAL paths — see checklist)
-runs/                 measured manifests + composition reports
-runs/tokenizer-v2/    tokenizer candidates + eval
-docs/                 internals, measured report, tokenizer study
-eval-set.jsonl        INTERNAL benchmark material — never publish
+tests/                102 tests, tiny fixtures
+examples/             sample corpus with planted defects, registry, lexicon
+scripts/demo.sh       the end-to-end demo
+configs/              shard registries
+runs/                 measured manifests from the reference corpus
+docs/                 the documentation set
 ```

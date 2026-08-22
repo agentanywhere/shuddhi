@@ -1,0 +1,34 @@
+{
+  "registry_version": 1,
+  "corpus_id": "shuddhi-example-corpus",
+  "_comment": "Example registry for the demo. Paths are relative to the repository root, so run factory.py from there. The third shard is tagged data_class 'customer' on purpose: Shuddhi refuses it before opening the file, and the refusal is recorded in the manifest. That is the point of the demo.",
+  "shards": [
+    {
+      "shard_id": "sample_eng",
+      "path": "examples/corpus/sample_eng.txt",
+      "source": "Shuddhi example corpus (synthetic, written for this demo)",
+      "license": "CC0-1.0",
+      "date_acquired": "2026-08-13",
+      "data_class": "synthetic-own",
+      "language": "eng"
+    },
+    {
+      "shard_id": "sample_hin",
+      "path": "examples/corpus/sample_hin.txt",
+      "source": "Shuddhi example corpus (synthetic, written for this demo)",
+      "license": "CC0-1.0",
+      "date_acquired": "2026-08-13",
+      "data_class": "synthetic-own",
+      "language": "hin"
+    },
+    {
+      "shard_id": "customer_export",
+      "path": "examples/corpus/customer_export.txt",
+      "source": "support ticket export (example of data that must never train)",
+      "license": "n/a",
+      "date_acquired": "2026-08-13",
+      "data_class": "customer",
+      "language": "eng"
+    }
+  ]
+}

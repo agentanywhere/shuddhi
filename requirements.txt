@@ -1,0 +1,16 @@
+# Shuddhi runtime dependencies (pip / venv).
+#   python3 -m venv .venv && source .venv/bin/activate
+#   pip install -r requirements.txt
+#
+# numpy is the only hard requirement. The rest are optional but recommended;
+# without them the pipeline still runs, with documented fallbacks:
+#   fasttext-predict absent -> Unicode-script language ID instead of lid.176
+#   tokenizers absent       -> no token accounting, no tokenizer lab
+#   trafilatura absent      -> crude tag-stripping instead of main-content HTML extraction
+numpy>=1.24
+fasttext-predict
+tokenizers
+trafilatura
+
+# testing
+pytest

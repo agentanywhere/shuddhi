@@ -1,0 +1,20 @@
+# Anchored patterns only. An unanchored pattern like "build*/" also matches
+# builder.py and silently removes a core module from the image — that bug
+# shipped once and cost a debugging session; keep the leading slashes.
+/.git
+/.gitignore
+/.pytest_cache
+**/__pycache__
+**/*.pyc
+/demo-out
+/out
+/build
+/sigs
+/lms
+/docs
+/runs
+**/*.u64
+**/*.u8
+**/*.ftz
+# internal benchmark material — never bake into a distributable image
+/eval-set.jsonl

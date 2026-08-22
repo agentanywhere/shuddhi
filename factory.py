@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
-"""Tatva Data Factory v1 — CLI orchestrator.
+"""Shuddhi (शुद्धि) — Data Factory CLI.
+
+Internal engine name: Tatva Data Factory.
 
 Subcommands:
+  doctor  Check that this Python environment can run the pipeline.
   check   Validate a shard registry: print the provenance ledger and every
           refusal. Exit 2 if anything was refused (refusal is the default
           for untagged or customer-class data).
@@ -85,6 +88,62 @@ def _load_shard(registry_path: str, shard_id: str):
             return meta, s
     print(f"shard {shard_id!r} not in registry {registry_path}", file=sys.stderr)
     sys.exit(2)
+
+
+def cmd_doctor(args) -> int:
+    """Report whether this interpreter can run the pipeline, and what is
+    missing. Exists because the most common failure by far is running
+    factory.py with a different Python than the one the dependencies were
+    installed into (system python vs venv vs conda)."""
+    ok = True
+    print(f"python      {platform.python_version()}  ({sys.executable})")
+    if sys.version_info < (3, 10):
+        print("            ERROR: Python 3.10 or newer is required")
+        ok = False
+
+    venv = os.environ.get("VIRTUAL_ENV")
+    conda = os.environ.get("CONDA_DEFAULT_ENV")
+    where = (f"venv: {venv}" if venv else
+             f"conda env: {conda}" if conda else
+             "no virtualenv/conda env active (using a system or user Python)")
+    print(f"environment {where}")
+
+    required = [("numpy", "array maths: dedup, manifests, builds")]
+    optional = [
+        ("tokenizers", "token accounting and the tokenizer lab", "tokens"),
+        ("fasttext", "fastText language ID (else: Unicode-script fallback)", "lid"),
+        ("trafilatura", "high-quality HTML extraction (else: tag-strip fallback)", "extract"),
+        ("pytest", "running the test suite", "dev"),
+    ]
+    for mod, why in required:
+        try:
+            m = __import__(mod)
+            print(f"  [ok]      {mod} {getattr(m, '__version__', '')} — {why}")
+        except ImportError:
+            print(f"  [MISSING] {mod} — {why}  (REQUIRED)")
+            ok = False
+    for mod, why, extra in optional:
+        try:
+            m = __import__(mod)
+            print(f"  [ok]      {mod} {getattr(m, '__version__', '')} — {why}")
+        except ImportError:
+            print(f"  [absent]  {mod} — {why}  (optional: pip install '.[{extra}]')")
+
+    print("data files")
+    for path, why in (
+        ("lid.176.ftz", "fastText language-ID model"),
+        ("eval-set.jsonl", "contamination screen input"),
+    ):
+        print(f"  [{'ok' if os.path.exists(path) else '--'}]      {path} — {why}"
+              if os.path.exists(path)
+              else f"  [absent]  {path} — {why}")
+
+    if ok:
+        print("\nREADY — the pipeline can run in this environment.")
+    else:
+        print("\nNOT READY — install the missing REQUIRED packages into THIS "
+              f"interpreter:\n    {sys.executable} -m pip install -e '.[lid,tokens,extract,dev]'")
+    return 0 if ok else 1
 
 
 def cmd_check(args) -> int:
@@ -423,6 +482,13 @@ def cmd_build(args) -> int:
 
         tox_lexicon = (ToxicityLexicon.from_dir(args.toxicity_lexicon_dir)
                        if args.toxicity_lexicon_dir else ToxicityLexicon.builtin())
+
+    if args.lm_dir and not max_bits:
+        print("WARNING: --lm-dir was given but the measured run has no perplexity "
+              "statistics, so the perplexity filter will do NOTHING. Train the "
+              "language models FIRST (factory.py train-lm), then re-run "
+              "`factory.py run ... --lm <lang>.lm.gz` so the distribution is "
+              "measured, then build.", file=sys.stderr)
 
     cfg = FilterConfig(
         min_quality=args.min_quality,
@@ -792,6 +858,9 @@ def _write_composition_md(out_dir: str, manifest: dict, shard_stats: dict, proce
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="factory", description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
+
+    p = sub.add_parser("doctor", help="check this environment can run the pipeline")
+    p.set_defaults(fn=cmd_doctor)
 
     p = sub.add_parser("check", help="validate a shard registry")
     p.add_argument("--registry", required=True)

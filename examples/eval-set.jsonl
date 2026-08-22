@@ -1,0 +1,2 @@
+{"id": "example:bug-fix", "source": "examples/eval-set.jsonl", "text": "There is a bug in src/orders.js. findOrder crashes with a TypeError when the id is not present. Fix it. Do not change anything else."}
+{"id": "example:capital-question", "source": "examples/eval-set.jsonl", "text": "Which Indian state has the longest coastline, and approximately how many kilometres does it span along the Arabian Sea?"}

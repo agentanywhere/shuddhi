@@ -40,4 +40,9 @@ def test_extract_dir_end_to_end(tmp_path):
 
     docs = list(shards.iter_docs(str(out)))
     assert len(docs) == 1
-    assert b"monsoon" in docs[0][1]
+    # Assert on body text both extractors keep. trafilatura returns main
+    # content only and drops the <h1>, while the fallback keeps it, so
+    # asserting on the heading makes this test pass or fail depending on
+    # which optional dependency happens to be installed.
+    assert b"sowing season" in docs[0][1]
+    assert stats["extractors_used"][0] in ("trafilatura", "strip-tags-fallback")

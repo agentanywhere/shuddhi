@@ -1,0 +1,13 @@
+# Example toxicity lexicon for the demo.
+#
+# Real deployments mount fuller per-language lists here (one lowercase term
+# per line, '#' comments allowed); whatever you mount is MERGED with the
+# built-in starter lists and the combined term list is sha-pinned into the
+# build's filter config, so a build always states exactly which lexicon
+# screened it.
+#
+# These two placeholder terms are nonsense words rather than real profanity,
+# so the demo can show the filter working without shipping slurs in the
+# repository. The built-in lists contain the real terms.
+zorbleflax
+flarbnok
