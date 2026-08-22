@@ -238,8 +238,13 @@ build's filter config.
 Applied in this order, first match wins, each counted separately:
 
 ```
-exact_dup → near_dup → quality → perplexity → toxicity → contamination → pii
+exact_dup → near_dup → quality → perplexity → toxicity → contamination
+          → plugins → pii
 ```
+
+Custom and third-party filters plug in at the `plugins` position without
+forking the engine, and their identities enter the config sha so the receipt
+covers them too — see [Extending](EXTENDING.md).
 
 ### Quality (`--min-quality`, default 0.5)
 

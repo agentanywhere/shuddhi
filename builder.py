@@ -19,7 +19,11 @@ build fails loudly instead of silently building something unmeasured.
 
 Filter precedence per document (first hit wins, counted by reason):
     exact-dup -> near-dup -> quality -> perplexity -> toxicity
-    -> contamination -> pii
+    -> contamination -> plugins -> pii
+
+Third-party and commercial filters plug in at the `plugins` position without
+forking the engine; see plugins.py. Their identities enter the filter config
+sha, so the receipt covers them too.
 """
 
 from __future__ import annotations
@@ -52,6 +56,10 @@ class FilterConfig:
     neardup_droplist_sha256: str = ""
     # sha256 of the toxicity lexicon; "" = filter off
     toxicity_lexicon_sha256: str = ""
+    # identities of enabled filter plugins, in application order (plugins.py).
+    # These are part of the config identity: a plugin that changes verdicts
+    # must change its identity, or two different corpora could claim one hash.
+    plugin_identities: list = field(default_factory=list)
 
     def canonical(self) -> str:
         # scorer probe sizes are part of the config identity: the same
@@ -66,6 +74,7 @@ class FilterConfig:
                 "drop_contaminated": self.drop_contaminated,
                 "neardup_droplist_sha256": self.neardup_droplist_sha256,
                 "toxicity_lexicon_sha256": self.toxicity_lexicon_sha256,
+                "plugins": self.plugin_identities,
                 "scorer_params": {
                     "ppx_probe_chars": ngram_lm.SCORE_PROBE_CHARS,
                     "quality_probe_chars": quality_mod.PROBE_CHARS,
@@ -116,9 +125,12 @@ def build_shard(
     emit_path: str | None = None,
     neardup_drop: np.ndarray | None = None,
     tox_lexicon=None,
+    plugins: list | None = None,
 ) -> dict:
     """Filter one shard. Returns counts + emitted-file receipt."""
+    plugins = plugins or []
     counts = {r: 0 for r in DROP_REASONS}
+    counts.update({f"plugin:{p.name}": 0 for p in plugins})
     kept = 0
     kept_hashes = array("Q")
     pii_redactions = 0
@@ -161,6 +173,15 @@ def build_shard(
                 continue
             if cfg.drop_contaminated and eval_index is not None and eval_index.check_doc(text):
                 counts["contamination"] += 1
+                continue
+
+            dropped_by_plugin = False
+            for plug in plugins:
+                if plug.check(text) is not None:
+                    counts[f"plugin:{plug.name}"] += 1
+                    dropped_by_plugin = True
+                    break
+            if dropped_by_plugin:
                 continue
 
             pii_counts = pii_mod.scan(text)

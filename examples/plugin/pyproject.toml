@@ -1,0 +1,17 @@
+[project]
+name = "shuddhi-example-plugin"
+version = "1.0.0"
+description = "A worked example of a Shuddhi filter plugin"
+requires-python = ">=3.10"
+
+# This is what makes the filter discoverable. The key is the plugin name you
+# pass to `factory.py build --plugin <name>`; the value points at the class.
+[project.entry-points."shuddhi.filters"]
+example-min-words = "shuddhi_example_plugin:MinWordsFilter"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["shuddhi_example_plugin"]

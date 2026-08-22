@@ -107,12 +107,20 @@ measured run, or it fails loudly.
 | `--toxicity-lexicon-dir` | — | `<lang>.txt` lists merged with the built-ins |
 | `--eval-set` | — | drop contaminated documents |
 | `--pii` | `redact` | `keep` · `redact` · `drop` |
+| `--plugin` | — | enable an installed filter plugin (repeatable); its identity enters the config sha |
 | `--shards` | all | comma list, for partition builds |
 | `--emit` | `none` | `none` = manifest only; `text` = write filtered shards |
 
 Writes `BUILD-MANIFEST.json`, `<shard>.kept.u64`, and with `--emit text`,
 `<shard>.filtered.txt`. Fails if any document is absent from the measured
 run's hash set (a shard changed after measurement).
+
+---
+
+## `plugins`
+
+Lists installed filter plugins with their versions and identities. See
+[Extending](EXTENDING.md).
 
 ---
 
