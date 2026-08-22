@@ -90,6 +90,67 @@ def _load_shard(registry_path: str, shard_id: str):
     sys.exit(2)
 
 
+def cmd_attest(args) -> int:
+    """Attest a corpus produced by another tool.
+
+    Deliberately does NOT claim provenance it cannot observe: without
+    --registry every provenance field reports UNKNOWN, because a blank field
+    in a receipt reads as "nothing to declare".
+    """
+    import attest as attest_mod
+    meta = accepted = None
+    if args.registry:
+        meta, accepted, _refused = registry_mod.load_registry(args.registry)
+
+    scan_fn = None
+    if args.scan:
+        import pii as pii_mod
+        import toxicity as tox_mod
+        lex = tox_mod.ToxicityLexicon.builtin()
+
+        def scan_fn(doc: bytes) -> dict:
+            text = doc.decode("utf-8", "replace")
+            out = {f"pii:{k}": v for k, v in pii_mod.scan(text).items() if v}
+            t = lex.score(text)
+            if t.get("flagged"):
+                out["toxicity:flagged"] = 1
+            return out
+
+    att = attest_mod.attest_corpus(args.corpus, args.corpus_id, meta, accepted, scan_fn)
+    print(attest_mod.render_human(att))
+    out = args.out or os.path.join(args.corpus, "ATTESTATION.json")
+    with open(out, "w", encoding="utf-8") as f:
+        json.dump(att, f, indent=2, sort_keys=True)
+        f.write("\n")
+    print(f"\nwrote {out}")
+    return 0
+
+
+def cmd_report(args) -> int:
+    """Draft the Article 53(1)(d) training-content summary.
+
+    Deliberately refuses to guess: the template asks for things a corpus cannot
+    know (provider identity, crawler behaviour, TDM opt-out policy) and those
+    are emitted as explicit GAPs. A regulatory filing is the wrong place for a
+    confident approximation.
+    """
+    import eu_ai_act
+    if not args.eu_ai_act:
+        print("report: pass --eu-ai-act (the only template supported today)")
+        return 2
+    meta, accepted, refused = registry_mod.load_registry(args.registry)
+    manifest = eu_ai_act.load_manifest(args.manifest)
+    text = eu_ai_act.build_summary(meta, accepted, refused, manifest)
+    if args.out:
+        with open(args.out, "w", encoding="utf-8") as f:
+            f.write(text)
+        print(f"wrote {args.out}  ({len(accepted)} shards, "
+              f"{len(refused)} refused{', manifest bound' if manifest else ''})")
+    else:
+        print(text, end="")
+    return 0
+
+
 def cmd_plugins(args) -> int:
     import plugins as plugins_mod
 
@@ -948,6 +1009,27 @@ def main(argv=None) -> int:
                    help="enable an installed filter plugin (repeatable); its "
                         "identity enters the filter config sha. See plugins.py")
     p.set_defaults(fn=cmd_build)
+
+    p = sub.add_parser("report",
+                       help="emit a draft EU AI Act Art.53(1)(d) training-content summary")
+    p.add_argument("--registry", required=True)
+    p.add_argument("--eu-ai-act", action="store_true",
+                   help="use the European Commission AI Office template shape")
+    p.add_argument("--manifest", default=None,
+                   help="BUILD-MANIFEST.json — binds the summary to a reproducible build")
+    p.add_argument("--out", default=None, help="write here instead of stdout")
+    p.set_defaults(fn=cmd_report)
+
+    p = sub.add_parser("attest",
+                       help="receipt for a corpus Shuddhi did not build (DataTrove, NeMo, Dolma, your own)")
+    p.add_argument("--corpus", required=True, help="directory of documents to attest")
+    p.add_argument("--corpus-id", required=True)
+    p.add_argument("--registry", default=None,
+                   help="optional: attest against declared provenance instead of UNKNOWN")
+    p.add_argument("--scan", action="store_true",
+                   help="also measure PII and toxicity across the corpus")
+    p.add_argument("--out", default=None, help="write ATTESTATION.json here")
+    p.set_defaults(fn=cmd_attest)
 
     p = sub.add_parser("plugins", help="list installed filter plugins")
     p.set_defaults(fn=cmd_plugins)
