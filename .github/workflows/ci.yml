@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: tests (py${{ matrix.python }}, ${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        python: ["3.10", "3.11", "3.12", "3.13"]
+        include:
+          # the pipeline is meant to run anywhere; prove it on macOS too
+          - os: macos-latest
+            python: "3.12"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -r requirements.txt
+      - name: environment report
+        run: python factory.py doctor
+      - name: unit tests
+        run: python -m pytest tests/ -q
+
+  determinism:
+    name: reproducible build hashes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: run the demo twice and compare every hash
+        run: |
+          ./scripts/demo.sh run-a > a.log
+          ./scripts/demo.sh run-b > b.log
+          grep -E "corpus_build_hash|filter_config_sha|filtered_build_hash" a.log | tr -s ' ' > a.hashes
+          grep -E "corpus_build_hash|filter_config_sha|filtered_build_hash" b.log | tr -s ' ' > b.hashes
+          echo "--- run A ---"; cat a.hashes
+          if ! diff -u a.hashes b.hashes; then
+            echo "::error::build hashes are not reproducible across runs"
+            exit 1
+          fi
+          echo "hashes identical across independent runs"
+
+  docker:
+    name: container image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t shuddhi:ci .
+      - run: docker run --rm shuddhi:ci doctor
+      - run: docker run --rm shuddhi:ci test
+      - name: demo in-container
+        run: docker run --rm shuddhi:ci demo

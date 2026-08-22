@@ -12,8 +12,11 @@ does not depend on anyone's memory. That is what this produces.
 
 Internally the engine is the **Tatva Data Factory**; Shuddhi is the product.
 
-> **Status: private.** Internal repository. An open-core extraction to GitHub
-> is planned but not decided — see `PUBLIC-RELEASE-CHECKLIST.md`.
+[![CI](https://github.com/REPLACE_ME/shuddhi/actions/workflows/ci.yml/badge.svg)](https://github.com/REPLACE_ME/shuddhi/actions/workflows/ci.yml)
+[![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
+
+Apache-2.0. CPU-only. No network calls, no telemetry, no account.
 
 ---
 
@@ -54,7 +57,6 @@ No Docker? `make venv` or `make conda`, then `./scripts/demo.sh`.
 | **[Extending](docs/EXTENDING.md)** | write a filter plugin; how custom filters stay inside the receipt |
 | [Engine internals](docs/ENGINE-INTERNALS.md) | stage-by-stage implementation notes |
 | [Measured report](docs/MEASURED-REPORT.md) | the full 176 GB run, with coverage on every number |
-| [Tokenizer study](docs/TOKENIZER-V2.md) | companion tokenizer measurement and decision |
 
 ---
 
@@ -141,3 +143,20 @@ configs/              shard registries
 runs/                 measured manifests from the reference corpus
 docs/                 the documentation set
 ```
+
+---
+
+## Contributing
+
+Issues and pull requests are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md)
+for the ground rules (the important one: anything that changes what a build
+keeps must also change the build's identity). Security-sensitive reports go
+to security@shephertz.com per [SECURITY.md](SECURITY.md).
+
+Most new filters belong in a [plugin](docs/EXTENDING.md) rather than in core.
+
+## Licence
+
+Apache-2.0 — see [LICENSE](LICENSE) and [NOTICE](NOTICE). "Shuddhi" is a
+trademark of ShepHertz Technologies; the licence covers the software, not
+the name.

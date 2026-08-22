@@ -1,22 +1,33 @@
 #!/usr/bin/env python3
-"""Build eval-set.jsonl — the benchmark material the contamination stage
-protects (stage 6 input).
+"""Build an eval-set JSONL for contamination screening.
 
-Sources, all inside this repo:
-  1. String literals in the eval harnesses (ops/reliability-ab.mjs,
-     ops/kriti-graders.mjs, ops/specialist-graders.mjs, ops/trap-honesty.mjs,
-     ops/regrade-traps.mjs): every double-quoted string and every backtick
-     template >= MIN_CHARS. This over-collects (grader messages as well as
-     prompts) — over-collection is the safe direction for a contamination
-     screen.
-  2. Eval fixture files (ops/fixtures/**): the source trees agents are graded
-     against, excluding node_modules and lockfiles.
+The contamination stage screens your corpus against material you do NOT
+want a model trained on: benchmark questions, held-out evaluation sets,
+grading prompts, canary strings. That material is yours, so this tool just
+converts what you have into the format Shuddhi reads.
 
-Output: one JSON object per line: {id, source, text}. The file is committed
-and its sha256 is recorded in every shard's contamination stats, so a report
-always says exactly which eval set it was screened against.
+Output format — one JSON object per line:
 
-Usage: python3 build_eval_set.py --repo-root ../.. --out eval-set.jsonl
+    {"id": "...", "source": "...", "text": "..."}
+
+Usage:
+
+    # each file in a directory becomes one eval item
+    python3 build_eval_set.py --from-dir ./benchmarks --out eval-set.jsonl
+
+    # each non-empty line of a file becomes one eval item
+    python3 build_eval_set.py --from-lines ./prompts.txt --out eval-set.jsonl
+
+    # pull a field out of an existing JSONL (e.g. a benchmark dump)
+    python3 build_eval_set.py --from-jsonl ./bench.jsonl --field question \
+        --out eval-set.jsonl
+
+Sources combine; pass several. Items shorter than --min-chars (default 40)
+are skipped: very short strings match ordinary prose and would flood your
+build with false contamination hits.
+
+Keep the result private. An eval set that has been published is one a model
+can be trained on, which is exactly what the screen exists to detect.
 """
 
 from __future__ import annotations
@@ -25,85 +36,74 @@ import argparse
 import hashlib
 import json
 import os
-import re
-
-MIN_CHARS = 80
-HARNESS_FILES = (
-    "ops/reliability-ab.mjs",
-    "ops/kriti-graders.mjs",
-    "ops/specialist-graders.mjs",
-    "ops/trap-honesty.mjs",
-    "ops/regrade-traps.mjs",
-    "ops/honesty-doctrine.mjs",
-    "ops/kriti-doctrine.mjs",
-)
-FIXTURE_DIRS = ("ops/fixtures",)
-FIXTURE_SKIP = re.compile(r"node_modules|package-lock\.json|\.png$|\.ico$")
-
-_DQ_STRING = re.compile(r'"((?:[^"\\\n]|\\.)+)"')
-_TEMPLATE = re.compile(r"`((?:[^`\\]|\\.)+)`", re.DOTALL)
 
 
-def _unescape(s: str) -> str:
-    return (
-        s.replace("\\n", "\n").replace("\\t", "\t").replace('\\"', '"').replace("\\`", "`").replace("\\\\", "\\")
-    )
-
-
-def collect(repo_root: str) -> list[dict]:
-    items: list[dict] = []
-    seen: set[str] = set()
-
-    def add(source: str, kind: str, text: str) -> None:
-        text = text.strip()
-        if len(text) < MIN_CHARS:
-            return
-        key = hashlib.sha256(text.encode()).hexdigest()[:24]
-        if key in seen:
-            return
-        seen.add(key)
-        items.append({"id": f"{kind}:{os.path.basename(source)}:{key[:10]}", "source": source, "text": text})
-
-    for rel in HARNESS_FILES:
-        path = os.path.join(repo_root, rel)
-        if not os.path.exists(path):
-            continue
-        src = open(path, encoding="utf-8").read()
-        for m in _DQ_STRING.finditer(src):
-            add(rel, "harness-string", _unescape(m.group(1)))
-        for m in _TEMPLATE.finditer(src):
-            add(rel, "harness-template", _unescape(m.group(1)))
-
-    for d in FIXTURE_DIRS:
-        base = os.path.join(repo_root, d)
-        for root, dirs, files in os.walk(base):
-            dirs[:] = [x for x in dirs if not FIXTURE_SKIP.search(x)]
-            for fn in files:
-                p = os.path.join(root, fn)
-                rel = os.path.relpath(p, repo_root)
-                if FIXTURE_SKIP.search(rel):
-                    continue
-                try:
-                    text = open(p, encoding="utf-8").read()
-                except (UnicodeDecodeError, OSError):
-                    continue
-                add(rel, "fixture", text)
-
-    return items
+def _add(items, seen, source, text, min_chars):
+    text = " ".join(text.split())
+    if len(text) < min_chars:
+        return
+    key = hashlib.sha256(text.encode()).hexdigest()
+    if key in seen:
+        return
+    seen.add(key)
+    items.append({"id": f"{os.path.basename(source)}:{key[:10]}",
+                  "source": source, "text": text})
 
 
 def main() -> int:
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--repo-root", default=os.path.join(os.path.dirname(__file__), "..", ".."))
-    ap.add_argument("--out", default=os.path.join(os.path.dirname(__file__), "eval-set.jsonl"))
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--from-dir", action="append", default=[],
+                    help="directory of text files; each file is one eval item")
+    ap.add_argument("--from-lines", action="append", default=[],
+                    help="text file; each non-empty line is one eval item")
+    ap.add_argument("--from-jsonl", action="append", default=[],
+                    help="JSONL file; use with --field")
+    ap.add_argument("--field", default="text", help="field to read from --from-jsonl")
+    ap.add_argument("--min-chars", type=int, default=40)
+    ap.add_argument("--out", required=True)
     args = ap.parse_args()
 
-    items = collect(os.path.abspath(args.repo_root))
-    with open(args.out, "w", encoding="utf-8") as f:
+    items: list[dict] = []
+    seen: set[str] = set()
+
+    for d in args.from_dir:
+        for root, _dirs, files in os.walk(d):
+            for fn in sorted(files):
+                path = os.path.join(root, fn)
+                try:
+                    _add(items, seen, path, open(path, encoding="utf-8").read(), args.min_chars)
+                except (UnicodeDecodeError, OSError):
+                    continue
+
+    for f in args.from_lines:
+        for line in open(f, encoding="utf-8"):
+            if line.strip():
+                _add(items, seen, f, line, args.min_chars)
+
+    for f in args.from_jsonl:
+        for line in open(f, encoding="utf-8"):
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                obj = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            val = obj.get(args.field)
+            if isinstance(val, str):
+                _add(items, seen, f, val, args.min_chars)
+
+    if not items:
+        print("no eval items found — check your sources and --min-chars")
+        return 1
+
+    with open(args.out, "w", encoding="utf-8") as fh:
         for it in items:
-            f.write(json.dumps(it, ensure_ascii=False) + "\n")
+            fh.write(json.dumps(it, ensure_ascii=False) + "\n")
     sha = hashlib.sha256(open(args.out, "rb").read()).hexdigest()
-    print(f"{len(items)} eval items -> {args.out}  sha256={sha}")
+    print(f"{len(items)} eval items -> {args.out}")
+    print(f"sha256 {sha}  (recorded in every build that screens against it)")
     return 0
 
 

@@ -151,10 +151,10 @@ def cmd_doctor(args) -> int:
         except ImportError:
             print(f"  [absent]  {mod} — {why}  (optional: pip install '.[{extra}]')")
 
-    print("data files")
+    print("optional data files (fetch or supply your own)")
     for path, why in (
-        ("lid.176.ftz", "fastText language-ID model"),
-        ("eval-set.jsonl", "contamination screen input"),
+        ("lid.176.ftz", "fastText language-ID model — `make fetch-lid`"),
+        ("examples/eval-set.jsonl", "example eval set for contamination screening"),
     ):
         print(f"  [{'ok' if os.path.exists(path) else '--'}]      {path} — {why}"
               if os.path.exists(path)

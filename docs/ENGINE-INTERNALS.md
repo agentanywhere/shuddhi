@@ -62,26 +62,26 @@ contract.
 
 ```bash
 # validate the ledger (exit 2 if anything is refused)
-python3 factory.py check --registry configs/tatva-sangraha-v1.json
+python3 factory.py check --registry configs/reference-sangraha.json
 
 # process one shard (all stages, one streaming pass)
-python3 factory.py run --registry configs/tatva-sangraha-v1.json \
+python3 factory.py run --registry configs/reference-sangraha.json \
   --shard sangraha_hin --out out/ \
   --eval-set eval-set.jsonl --fasttext-model lid.176.ftz \
   --tokenizer tokenizer.json
 
 # merge all shard outputs into MANIFEST.json + COMPOSITION.md
-python3 factory.py merge --registry configs/tatva-sangraha-v1.json --out out/
+python3 factory.py merge --registry configs/reference-sangraha.json --out out/
 
 # train per-language perplexity-proxy LMs (once per corpus)
-python3 factory.py train-lm --registry configs/tatva-sangraha-v1.json \
+python3 factory.py train-lm --registry configs/reference-sangraha.json \
   --shard sangraha_hin --lm-dir lms/
 
 # applied-filter build over the MEASURED run (run -> merge -> build):
 # exact-dedup keep-first, quality >= 0.5, per-language ppx cutoff at the
 # measured p99, PII redaction, contamination drop. --emit none produces the
 # hash-only manifest; --emit text also writes the filtered shards.
-python3 factory.py build --registry configs/tatva-sangraha-v1.json \
+python3 factory.py build --registry configs/reference-sangraha.json \
   --run-dir out/ --build-out build/ --lm-dir lms/ --ppx-percentile 99 \
   --pii redact --eval-set eval-set.jsonl --emit none
 ```
