@@ -157,3 +157,35 @@ def test_render_human_surfaces_the_limitation(tmp_path):
     text = attest.render_human(att)
     assert "UNKNOWN" in text
     assert "CONTENT, not ACQUISITION" in text
+
+
+# ------------------------------------------------ receipts are not documents --
+
+def test_attesting_twice_in_place_yields_the_same_hash(tmp_path):
+    """The default output path writes ATTESTATION.json *into* the attested
+    directory. If that receipt were then counted as a document, the second
+    attestation of an unchanged corpus would differ from the first — which
+    would break the one property the receipt exists to assert."""
+    import json as _json
+    root = _corpus(tmp_path, DOCS)
+    first = attest.attest_corpus(root, "c")
+    # simulate the CLI's default: write the receipt inside the corpus
+    (tmp_path / "corpus" / "ATTESTATION.json").write_text(
+        _json.dumps(first), encoding="utf-8")
+    second = attest.attest_corpus(root, "c")
+    assert second["corpus_build_hash"] == first["corpus_build_hash"]
+    assert second["documents"] == first["documents"]
+
+
+def test_upstream_manifest_is_not_counted_as_a_document(tmp_path):
+    """DataTrove's stats.json describes a corpus; it is not text a model saw.
+    Counting it would overstate the corpus and change the hash."""
+    root = _corpus(tmp_path, DOCS)
+    bare = attest.attest_corpus(root, "c")
+    (tmp_path / "corpus" / "stats.json").write_text(
+        '{"documents": 999999}', encoding="utf-8")
+    withman = attest.attest_corpus(root, "c")
+    assert withman["documents"] == bare["documents"]
+    assert withman["corpus_build_hash"] == bare["corpus_build_hash"]
+    # still cited as upstream, just not counted as content
+    assert withman["upstream"]["tool"] == "datatrove"

@@ -4,6 +4,7 @@ __pycache__/
 .pytest_cache/
 # large local artefacts — receipts live in runs/, not the data itself
 out*/
+demo-out/
 build*/
 sigs/
 lms/
