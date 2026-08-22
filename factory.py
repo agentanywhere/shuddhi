@@ -90,6 +90,31 @@ def _load_shard(registry_path: str, shard_id: str):
     sys.exit(2)
 
 
+def cmd_report(args) -> int:
+    """Draft the Article 53(1)(d) training-content summary.
+
+    Deliberately refuses to guess: the template asks for things a corpus cannot
+    know (provider identity, crawler behaviour, TDM opt-out policy) and those
+    are emitted as explicit GAPs. A regulatory filing is the wrong place for a
+    confident approximation.
+    """
+    import eu_ai_act
+    if not args.eu_ai_act:
+        print("report: pass --eu-ai-act (the only template supported today)")
+        return 2
+    meta, accepted, refused = registry_mod.load_registry(args.registry)
+    manifest = eu_ai_act.load_manifest(args.manifest)
+    text = eu_ai_act.build_summary(meta, accepted, refused, manifest)
+    if args.out:
+        with open(args.out, "w", encoding="utf-8") as f:
+            f.write(text)
+        print(f"wrote {args.out}  ({len(accepted)} shards, "
+              f"{len(refused)} refused{', manifest bound' if manifest else ''})")
+    else:
+        print(text, end="")
+    return 0
+
+
 def cmd_plugins(args) -> int:
     import plugins as plugins_mod
 
@@ -948,6 +973,16 @@ def main(argv=None) -> int:
                    help="enable an installed filter plugin (repeatable); its "
                         "identity enters the filter config sha. See plugins.py")
     p.set_defaults(fn=cmd_build)
+
+    p = sub.add_parser("report",
+                       help="emit a draft EU AI Act Art.53(1)(d) training-content summary")
+    p.add_argument("--registry", required=True)
+    p.add_argument("--eu-ai-act", action="store_true",
+                   help="use the European Commission AI Office template shape")
+    p.add_argument("--manifest", default=None,
+                   help="BUILD-MANIFEST.json — binds the summary to a reproducible build")
+    p.add_argument("--out", default=None, help="write here instead of stdout")
+    p.set_defaults(fn=cmd_report)
 
     p = sub.add_parser("plugins", help="list installed filter plugins")
     p.set_defaults(fn=cmd_plugins)
