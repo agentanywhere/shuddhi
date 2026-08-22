@@ -15,7 +15,7 @@ FROM python:3.12-slim
 
 LABEL org.opencontainers.image.title="Shuddhi Data Factory" \
       org.opencontainers.image.description="Receipts-first dataset cleansing engine for sovereign AI" \
-      org.opencontainers.image.source="https://bitbucket.org/shephertz/ai-shuddhi-data-factory"
+      org.opencontainers.image.source="https://github.com/agentanywhere/shuddhi"
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
