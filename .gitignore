@@ -13,3 +13,6 @@ lms/
 *.sigs.u64
 *.valid.u8
 *.ftz
+
+# Generated receipts — `attest` writes these next to the corpus it attested.
+ATTESTATION.json
