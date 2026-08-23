@@ -10,9 +10,20 @@ Pick one. All three are equivalent; Docker is the least fiddly.
 
 ### Docker (recommended)
 
+Pull the published image — nothing to build, nothing to install:
+
 ```bash
-docker build -t shuddhi .
-docker run --rm shuddhi doctor
+docker pull ghcr.io/agentanywhere/shuddhi:latest
+docker run --rm ghcr.io/agentanywhere/shuddhi doctor
+```
+
+Images are multi-architecture (x86-64 and arm64, so Apple Silicon is native).
+Pin a version for reproducible pipelines — `:1.2.0` rather than `:latest`.
+
+Building from source works too:
+
+```bash
+docker build -t shuddhi . && docker run --rm shuddhi doctor
 ```
 
 ### venv

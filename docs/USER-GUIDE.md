@@ -15,7 +15,9 @@ have run the demo once.
 7. [Build: applying the filters](#7-build-applying-the-filters)
 8. [Scaling out](#8-scaling-out)
 9. [Reading the outputs](#9-reading-the-outputs)
-10. [Honest limits](#10-honest-limits)
+10. [Attesting corpora built elsewhere](#10-attesting-corpora-built-elsewhere)
+11. [Regulatory reporting](#11-regulatory-reporting)
+12. [Honest limits](#12-honest-limits)
 
 ---
 
@@ -385,7 +387,47 @@ versions that produced it.
 
 ---
 
-## 10. Honest limits
+## 10. Attesting corpora built elsewhere
+
+You do not have to build a corpus with Shuddhi to get a receipt for it. If
+another pipeline produced it, fingerprint the result:
+
+```bash
+python3 factory.py attest --corpus ./out-from-datatrove/ \
+    --corpus-id fineweb-slice --registry my-registry.json --scan
+```
+
+The hash definition is identical to a native build's, so an attested corpus
+and a Shuddhi-built one are comparable and verifiable the same way.
+
+The honest boundary: an attestation proves **content, not acquisition**. It
+binds a corpus to a hash and says what is inside it. It cannot tell you
+where the data came from or under what licence — that is what `--registry`
+adds, and without it every provenance field reads `UNKNOWN` rather than
+blank, because a blank reads as "nothing to declare".
+
+## 11. Regulatory reporting
+
+```bash
+python3 factory.py report --eu-ai-act --registry my-registry.json \
+    --manifest build/BUILD-MANIFEST.json > article-53.md
+```
+
+Article 53(1)(d) of the EU AI Act requires providers of general-purpose
+models on the Union market to publish a sufficiently detailed summary of
+training content. Shuddhi computes nothing new for this: the registry
+already requires `source`, `license`, `data_class`, `language` and
+`date_acquired` — a shard missing any is refused, not defaulted — so the
+summary is a projection of what admission already recorded.
+
+Pass the **build** manifest, not the corpus manifest: only the former
+records a filter configuration, and a training-content summary that cannot
+name the filters is describing a corpus nobody built.
+
+The output is a draft for your compliance function to review, not legal
+advice and not a filing.
+
+## 12. Honest limits
 
 Worth knowing before you rely on any of it:
 
