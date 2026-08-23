@@ -85,7 +85,7 @@ processes on a laptop.
 Scaffold one from the files you have, rather than writing it by hand:
 
 ```bash
-shuddhi init --corpus ./corpus --out my-registry.json
+shuddhi init --corpus <folder-with-your-txt-files> --out my-registry.json
 ```
 
 `init` writes an entry per text file and guesses a language from a filename

@@ -110,8 +110,12 @@ The registry is the doorway: every shard declares where it came from, and
 nothing enters without one. Scaffold it from the files you actually have:
 
 ```bash
-shuddhi init --corpus ./corpus --out my-registry.json
+shuddhi init --corpus <folder-with-your-txt-files> --out my-registry.json
 ```
+
+Point `--corpus` at wherever your text actually lives — there is no
+convention to follow. To try it on the corpus that ships with the
+repository, use `examples/corpus`.
 
 That writes one entry per text file, with the provenance fields left
 **empty on purpose** — an empty field is refused, and `check` names exactly
