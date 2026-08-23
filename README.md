@@ -44,6 +44,20 @@ No Docker? `make venv` or `make conda`, then `./scripts/demo.sh`.
 
 ---
 
+## See your builds
+
+```bash
+python3 factory.py ui --dir shuddhi-out/
+```
+
+![The Shuddhi viewer: receipts, corpus measurements, drops by reason, and the datasets that went in](docs/img/ui-light.png)
+
+Build history, the datasets that went in, live progress while a run is
+happening, every warning and error, and the receipt to download. It reads
+your output directory and serves to localhost — no accounts, no database, no
+telemetry, and it works air-gapped because there is no CDN to reach.
+
+
 ## Documentation
 
 | | |
