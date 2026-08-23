@@ -715,13 +715,22 @@ def cmd_train_lm(args) -> int:
             if total >= budget:
                 break
     if len(texts) < 50 or total < 200_000:
+        # Say what would actually help. If we were already reading every
+        # document, "sample more densely" is advice that cannot be followed --
+        # the shard is simply too small for a percentile to mean anything.
+        if args.sample_every > 1:
+            fix = (f"Re-run with --sample-every 1 so every document contributes"
+                   f" (currently every {args.sample_every}th).")
+        else:
+            fix = ("Every document was already used, so this shard is simply too "
+                   "small for a perplexity percentile to mean anything. Skip the "
+                   "perplexity filter for a corpus this size (--no-perplexity), "
+                   "or supply a model trained on a larger sample of the language.")
         print(
             f"WARNING: {shard.shard_id}: the language model was trained on only "
-            f"{len(texts)} document(s) / {total/1000:.0f} KB, because --sample-every "
-            f"is {args.sample_every} and this shard is small. A model this thin "
+            f"{len(texts)} document(s) / {total/1000:.0f} KB. A model this thin "
             "does not describe the language, so any perplexity cutoff derived "
-            f"from it is arbitrary. Re-run with --sample-every 1 (or omit the "
-            "perplexity filter for a corpus this size).",
+            f"from it is arbitrary. {fix}",
             file=sys.stderr,
         )
     lm = CharTrigramLM.train(texts)
@@ -843,11 +852,17 @@ def cmd_build(args) -> int:
         tox_lexicon = (ToxicityLexicon.from_dir(args.toxicity_lexicon_dir)
                        if args.toxicity_lexicon_dir else ToxicityLexicon.builtin())
 
+    ppx_off_warnings: list[str] = []
     for shard_id, lang, scored in thin_ppx:
-        print(f"WARNING: {shard_id}: the perplexity filter is OFF for '{lang}' — "
-              f"only {scored} document(s) were scored during measurement, and a "
-              f"percentile from that many is meaningless. Re-measure with a "
-              f"smaller --sample-every to enable it.", file=sys.stderr)
+        msg = (f"PERPLEXITY FILTER OFF for '{lang}' ({shard_id}): only {scored} "
+               f"document(s) were scored during measurement and a percentile from "
+               f"that many is meaningless, so 'perplexity: 0' below means NOT "
+               f"SCREENED, not 'screened and clean'. To enable it, measure with "
+               f"--sample-every 1 on a shard of at least "
+               f"{MIN_PPX_SAMPLE} documents, or lower --min-ppx-sample if you "
+               f"accept a noisier cutoff.")
+        print(f"WARNING: {msg}", file=sys.stderr)
+        ppx_off_warnings.append(msg)
 
     if args.lm_dir and not max_bits and not thin_ppx:
         print("WARNING: --lm-dir was given but the measured run has no perplexity "
@@ -901,7 +916,10 @@ def cmd_build(args) -> int:
     total_seen = total_kept + sum(
         sum(r["dropped"].values()) for r in per_shard.values()
     )
-    build_warnings: list[str] = []
+    # A filter that silently did not run must be visible in the receipt. A
+    # reader who only has BUILD-MANIFEST.json would otherwise see a zero and
+    # take it for a clean screen.
+    build_warnings: list[str] = list(ppx_off_warnings)
     if total_kept == 0 and total_seen > 0:
         build_warnings.append(
             "EMPTY BUILD: every document was dropped. A receipt for an empty "
