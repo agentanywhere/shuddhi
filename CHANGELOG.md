@@ -2,6 +2,27 @@
 
 Notable changes to Shuddhi. Dates are release dates.
 
+## Unreleased
+
+**Fixed — shards with Windows line endings were read as a single document.**
+The record separator is a blank line, which CRLF writes as `\r\n\r\n`; that
+contains no `\n\n`, so a whole shard collapsed into one document. It did not
+error — it produced a clean receipt for a corpus that had been misread, which
+is the worst failure mode a receipts tool can have. CRLF and lone-CR endings
+are now folded to LF before splitting.
+
+Two consequences worth knowing:
+
+- The same documents now hash identically whether the file carries Unix or
+  Windows endings, so a receipt can be recomputed across platforms.
+- A corpus whose files contain carriage returns will produce a **different
+  `corpus_build_hash` than it did before this fix** — the earlier hash
+  described a misreading of it. Pure-LF corpora are unaffected, hash for
+  hash. Shard provenance checksums are unchanged either way: they cover the
+  raw file bytes.
+
+Found by adding Windows to the CI matrix instead of assuming it worked.
+
 ## 1.2.0 — 2026-08-13
 
 First public release.
