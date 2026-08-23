@@ -1,65 +1,18 @@
 # Quickstart
 
-From nothing to a receipted, filtered corpus. Ten minutes, no GPU.
+From nothing to a corpus you can prove the contents of. No GPU, no account,
+no network calls.
 
 ---
 
-## 1. Install
-
-Pick one. All three are equivalent; Docker is the least fiddly.
-
-### Docker (recommended)
-
-Pull the published image — nothing to build, nothing to install:
+## 1. See it work — 30 seconds
 
 ```bash
-docker pull ghcr.io/agentanywhere/shuddhi:latest
-docker run --rm ghcr.io/agentanywhere/shuddhi doctor
+docker run --rm ghcr.io/agentanywhere/shuddhi:1.2.0 demo
 ```
 
-Images are multi-architecture (x86-64 and arm64, so Apple Silicon is native).
-Pin a version for reproducible pipelines — `:1.2.0` rather than `:latest`.
-
-Building from source works too:
-
-```bash
-docker build -t shuddhi . && docker run --rm shuddhi doctor
-```
-
-### venv
-
-```bash
-python3 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt
-shuddhi doctor
-```
-
-### conda
-
-```bash
-conda env create -f environment.yml
-conda activate shuddhi
-shuddhi doctor
-```
-
-`doctor` prints which interpreter you are on, which packages it can see, and
-exactly what to install if something is missing. **If anything later goes
-wrong, run `doctor` first** — the most common failure by far is running
-`shuddhi` with a different Python than the one you installed into.
-
-`make venv`, `make conda`, and `make docker` wrap the same commands.
-
----
-
-## 2. See it work
-
-```bash
-./scripts/demo.sh              # or: docker run --rm shuddhi demo
-```
-
-This runs the whole pipeline over `examples/corpus/`, a small corpus with
-**deliberately planted defects**, and takes a few seconds. You should see
-every filter catch something:
+That runs the whole pipeline over a bundled sample corpus which has defects
+**deliberately planted in it**, so every filter visibly catches something:
 
 ```
 kept 34 of 42 documents; 5 PII spans redacted
@@ -68,48 +21,93 @@ dropped by reason: {'exact_dup': 1, 'near_dup': 2, 'quality': 1,
 refused at the gate: ['customer_export']
 ```
 
-Three hashes are printed at the end. **Run it twice — they do not change**,
-and they are the same on macOS, Linux, and inside the container.
+Three hashes print at the end. **Run it again — they do not change**, and
+they are identical on macOS, on Linux, and inside the container.
 
-Two things worth understanding from that output:
+Two things in that output are worth understanding now, because they are the
+whole product:
 
-- `customer_export` was **refused before its file was opened**. It is tagged
-  `data_class: "customer"` in `examples/registry.json`, and no flag can
-  admit it. That is the point of the provenance gate.
-- `'pii': 0` does not mean no PII was found — it means none was *dropped*,
-  because the policy is `--pii redact`. Five spans were rewritten to
-  `[PII:email]`, `[PII:phone_in]`, and so on in the emitted text.
+- **`customer_export` was refused before its file was opened.** It is tagged
+  `data_class: "customer"` in the registry, and there is no flag, env var or
+  config field that admits it. Try to find one.
+- **`'pii': 0` does not mean no PII was found.** It means none was *dropped* —
+  the policy is redact, so five spans were rewritten to `[PII:email]`,
+  `[PII:phone_in]` and so on in the emitted text.
 
 ---
 
-## 3. Run it on your own corpus
+## 2. Install
 
-### Prepare your data
+Only needed to run Shuddhi on your own data. Pick one.
 
-Shuddhi reads plain UTF-8 text files where **documents are separated by a
-blank line**:
+### Docker
+
+```bash
+docker pull ghcr.io/agentanywhere/shuddhi:1.2.0
+docker run --rm ghcr.io/agentanywhere/shuddhi:1.2.0 doctor
+```
+
+Multi-architecture (x86-64 and arm64, so Apple Silicon runs native). **Pin
+the version** in anything reproducible — a receipt produced by `:latest`
+cannot say which engine made it.
+
+### pip
+
+```bash
+python3 -m venv .venv && source .venv/bin/activate
+pip install "shuddhi[lid,tokens,extract] @ git+https://github.com/agentanywhere/shuddhi"
+shuddhi doctor
+```
+
+(Installing straight from the repository until the package is on PyPI. The
+extras are optional: `lid` for fastText language ID, `tokens` for token
+accounting, `extract` for HTML extraction. Without them the pipeline still
+runs, with documented fallbacks.)
+
+### From a clone
+
+```bash
+git clone https://github.com/agentanywhere/shuddhi.git && cd shuddhi
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[lid,tokens,extract,dev]"
+shuddhi doctor
+```
+
+`python3 -m shuddhi` also works from a clone with nothing installed, if you
+would rather not install anything at all.
+
+`doctor` reports which interpreter you are on, what it can import, and the
+exact command to fix anything missing. **If something later goes wrong, run
+`doctor` first** — by far the most common failure is running Shuddhi with a
+different Python than the one you installed into.
+
+`make venv`, `make conda` and `make docker` wrap the same steps.
+
+---
+
+## 3. Point it at your own corpus
+
+### Your data
+
+Plain UTF-8 text, **one blank line between documents**:
 
 ```
 First document. It can span
 several lines.
 
 Second document.
-
-Third document.
 ```
 
-One file per language or source is the normal layout — each file is a
-*shard*. If you have HTML instead, convert it first:
+One file per language or source — each file is a *shard*. Have HTML instead?
 
 ```bash
-shuddhi extract --in-dir ./my-html/ --out corpus/mysource.txt
+shuddhi extract --in-dir ./my-html/ --out corpus/news_eng.txt
 ```
 
-### Write a registry
+### A registry
 
-The registry is the doorway. Every shard declares where it came from, and
-nothing enters the pipeline without it. Copy `examples/registry.json` and
-edit:
+The registry is the doorway: every shard declares where it came from, and
+nothing enters without one. Save this as `my-registry.json`:
 
 ```json
 {
@@ -121,7 +119,7 @@ edit:
       "path": "corpus/news_eng.txt",
       "source": "Example News Crawl 2026",
       "license": "CC-BY-4.0",
-      "date_acquired": "2026-08-13",
+      "date_acquired": "2026-08-23",
       "data_class": "public",
       "language": "eng"
     }
@@ -129,94 +127,120 @@ edit:
 }
 ```
 
-`data_class` must be `public`, `licensed`, or `synthetic-own`. Anything
-tagged `customer`, `customer-derived`, or `evaluation-only` is refused, as
-is anything missing a field. See the [User Guide](USER-GUIDE.md#3-the-registry-and-the-provenance-gate)
-for every field and rule.
+`data_class` must be `public`, `licensed` or `synthetic-own`. Anything tagged
+`customer`, `customer-derived` or `evaluation-only` is refused, as is
+anything missing a field. Every rule is in the
+[User Guide](USER-GUIDE.md#3-the-registry-and-the-provenance-gate).
 
 ```bash
 shuddhi check --registry my-registry.json
 ```
 
-Fix whatever it refuses before going further. (It exits non-zero when
-anything is refused — that is intentional, so CI can gate on it.)
+Fix whatever it refuses before going further. It exits non-zero when
+anything is refused, which is deliberate — that makes it a CI gate.
 
-### Run it — one command
+### Build it — one command
 
 ```bash
 shuddhi pipeline --registry my-registry.json --out shuddhi-out/
 ```
 
-That is the whole pipeline: language models, measurement, corpus manifest,
-near-duplicate clustering, filtering, the cleaned corpus, an Article 53 draft
-and an HTML receipt you can open in a browser. It runs the stages in the
-right order, which matters — the language models must exist *before* the
-measurement pass or the perplexity filter has no distribution to work from.
+Language models, measurement, the corpus manifest, near-duplicate
+clustering, filtering, the cleaned corpus, an Article 53 draft and an HTML
+receipt. It runs the stages in the right order, which matters more than it
+sounds: the language models must exist *before* the measurement pass, or the
+perplexity filter has no distribution to threshold against.
 
-Useful switches:
+**If it keeps nothing, that is the tool telling you something.** It will say
+so loudly and record the warning in the manifest. On a small or templated
+corpus the usual culprit is near-duplicate clustering doing its job — if
+your documents share most of their wording, they genuinely are near
+duplicates and one exemplar survives per cluster. Check
+`shuddhi-out/neardup-drop.u64.stats.json`: a `largest_cluster` close to your
+document count is the tell. Re-run with `--no-neardup` to confirm.
+
+Switches worth knowing:
 
 ```bash
---emit none              # manifest only; evaluate a configuration without writing a corpus
---no-perplexity          # skip the language models (sensible under a few thousand documents)
---no-neardup             # skip near-duplicate clustering
---eval-set my-evals.jsonl --toxicity-lexicon-dir lexicon/
---allow-refusals         # proceed with the accepted shards when the registry has refusals
+--emit none        # manifest only: evaluate a configuration without writing a corpus
+--no-perplexity    # skip the language models (sensible under a few thousand documents)
+--no-neardup       # skip near-duplicate clustering
+--pii drop         # drop documents containing PII instead of redacting them
+--eval-set my-benchmarks.jsonl   # drop anything overlapping your eval sets
 ```
 
-When you want to parallelise across shards, resume after a failure, or
-inspect between phases, run the stages yourself:
+---
 
-### The same thing, stage by stage
+## 4. Look at what you got
+
+```bash
+shuddhi ui --dir shuddhi-out/
+```
+
+Build history, the receipts, what each filter dropped and why, the datasets
+that went in, every warning, and the report to download — in a browser, on
+localhost, reading only your own filesystem.
+
+`shuddhi-out/report.html` is the same thing as a single self-contained file
+you can email to an auditor or attach to a compliance pack.
+
+```
+shuddhi-out/run/MANIFEST.json         corpus_build_hash + what was measured
+shuddhi-out/build/BUILD-MANIFEST.json filtered_build_hash + drops by reason
+shuddhi-out/build/*.filtered.txt      the cleaned corpus
+shuddhi-out/REPORT.md                 EU AI Act Article 53(1)(d) draft
+```
+
+**Record `filtered_build_hash` wherever you track training runs.** That one
+string identifies exactly which documents your model saw, and anyone holding
+the same source files can recompute it and check you.
+
+---
+
+## Already have a corpus, cleaned with something else?
+
+You do not have to rebuild it to get a receipt:
+
+```bash
+shuddhi attest --corpus ./out-from-datatrove/ --corpus-id fineweb-slice \
+    --registry my-registry.json --scan
+```
+
+Same hash definition a native build uses, so an attested corpus and a
+Shuddhi-built one are comparable and verifiable the same way. The honest
+limit: an attestation proves **content, not acquisition** — it says what is
+inside the corpus, not where it came from. That is what `--registry` adds.
+
+---
+
+## When you outgrow one command
+
+`pipeline` is the whole thing in one step. Run the stages yourself when you
+want to parallelise across shards, resume after a failure, or inspect
+between phases:
 
 ```bash
 REG=my-registry.json
 
-# optional but recommended: language models for the perplexity filter.
-# Train these BEFORE measuring, so the measurement records a distribution.
 shuddhi train-lm --registry $REG --shard news_eng --lm-dir lms/
+shuddhi run     --registry $REG --shard news_eng --out run/ --lm lms/eng.lm.gz --pii-scan
+shuddhi merge   --registry $REG --out run/
 
-# measure every shard (repeat per shard; these can run in parallel)
-shuddhi run --registry $REG --shard news_eng --out run/ \
-    --lm lms/eng.lm.gz --pii-scan
+shuddhi neardup-sig   --registry $REG --shard news_eng --sig-dir sigs/
+shuddhi neardup-merge --registry $REG --run-dir run/ --sig-dir sigs/ --out neardup-drop.u64
 
-# mint the corpus build hash
-shuddhi merge --registry $REG --out run/
-
-# near-duplicate clustering across the whole corpus
-shuddhi neardup-sig --registry $REG --shard news_eng --sig-dir sigs/
-shuddhi neardup-merge --registry $REG --run-dir run/ \
-    --sig-dir sigs/ --out neardup-drop.u64
-
-# apply the filters and write the cleaned corpus
 shuddhi build --registry $REG --run-dir run/ --build-out build/ \
-    --lm-dir lms/ --neardup-drop neardup-drop.u64 \
-    --toxicity --pii redact --emit text
+    --lm-dir lms/ --neardup-drop neardup-drop.u64 --toxicity --pii redact --emit text
 ```
 
-Your cleaned shards are `build/*.filtered.txt`; your receipt is
-`build/BUILD-MANIFEST.json`.
-
----
-
-## 4. What you now have
-
-```
-run/MANIFEST.json         corpus_build_hash + composition of everything measured
-run/COMPOSITION.md        the same, as readable tables
-build/BUILD-MANIFEST.json filtered_build_hash + what was dropped and why
-build/*.filtered.txt      the cleaned corpus (only with --emit text)
-```
-
-Record `filtered_build_hash` in whatever ledger tracks your training runs.
-That single string identifies exactly which documents your model saw, and
-anyone with the raw shards can recompute it and check.
+Shards are independent, so `run` and `neardup-sig` parallelise cleanly.
 
 ---
 
 ## Next
 
 - [User Guide](USER-GUIDE.md) — every stage, what it measures, how to tune it
-- [CLI Reference](CLI-REFERENCE.md) — every command and flag
-- [Docker](DOCKER.md) — mounts, compose, CI usage
+- [CLI Reference](CLI-REFERENCE.md) — every command, flag and exit code
+- [Docker](DOCKER.md) — mounts, compose, CI
 - [Troubleshooting](TROUBLESHOOTING.md) — when something goes wrong
-- [FAQ](FAQ.md)
+- [FAQ](FAQ.md) — how this differs from other pipelines, and what it does not do
