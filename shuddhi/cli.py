@@ -914,23 +914,34 @@ def cmd_build(args) -> int:
     rep.phase("applying filters")
     per_shard = {}
     kept_arrays = []
-    for s in build_shards:  # registry order = deterministic keep-first order
-        emit_path = (
-            os.path.join(args.build_out, f"{s.shard_id}.filtered.txt")
-            if args.emit == "text" else None
-        )
-        r = build_shard(s, index, cfg, lm=lms.get(s.language),
-                        eval_index=eval_index, emit_path=emit_path,
-                        neardup_drop=neardup_drop, tox_lexicon=tox_lexicon,
-                        plugins=plugin_objs)
-        kept = r.pop("kept_hashes")
-        kept.tofile(os.path.join(args.build_out, f"{s.shard_id}.kept.u64"))
-        kept_arrays.append(kept)
-        per_shard[s.shard_id] = r
-        dropped = {k: v for k, v in r["dropped"].items() if v}
-        rep.finish(f"{s.shard_id}: kept {r['kept_docs']:,}"
-                   + (f", dropped {dropped}" if dropped else ""),
-                   shard=s.shard_id, kept=r["kept_docs"], dropped=dropped)
+    drops_fh = None
+    drops_path = os.path.join(args.build_out, "dropped.jsonl")
+    if getattr(args, "log_drops", False):
+        drops_fh = open(drops_path, "w", encoding="utf-8")
+    try:
+        for s in build_shards:  # registry order = deterministic keep-first order
+            emit_path = (
+                os.path.join(args.build_out, f"{s.shard_id}.filtered.txt")
+                if args.emit == "text" else None
+            )
+            r = build_shard(s, index, cfg, lm=lms.get(s.language),
+                            eval_index=eval_index, emit_path=emit_path,
+                            neardup_drop=neardup_drop, tox_lexicon=tox_lexicon,
+                            plugins=plugin_objs, drops_fh=drops_fh)
+            kept = r.pop("kept_hashes")
+            kept.tofile(os.path.join(args.build_out, f"{s.shard_id}.kept.u64"))
+            kept_arrays.append(kept)
+            per_shard[s.shard_id] = r
+            dropped = {k: v for k, v in r["dropped"].items() if v}
+            rep.finish(f"{s.shard_id}: kept {r['kept_docs']:,}"
+                       + (f", dropped {dropped}" if dropped else ""),
+                       shard=s.shard_id, kept=r["kept_docs"], dropped=dropped)
+    finally:
+        if drops_fh is not None:
+            drops_fh.close()
+    if getattr(args, "log_drops", False):
+        print(f"  wrote {drops_path} — every dropped document, with its reason",
+              flush=True)
 
     fbh = filtered_build_hash(kept_arrays)
     total_kept = int(sum(a.size for a in kept_arrays))
@@ -1329,7 +1340,7 @@ def cmd_pipeline(args) -> int:
         neardup_drop=("" if args.no_neardup else drop_path),
         toxicity=not args.no_toxicity, toxicity_lexicon_dir=args.toxicity_lexicon_dir,
         eval_set=args.eval_set, pii=args.pii, shards="", emit=args.emit,
-        plugin=args.plugin))
+        plugin=args.plugin, log_drops=args.log_drops))
     if rc != 0:
         return rc
 
@@ -1563,6 +1574,8 @@ def main(argv=None) -> int:
                    help="skip the language models and the perplexity filter")
     p.add_argument("--no-neardup", action="store_true", help="skip near-duplicate clustering")
     p.add_argument("--no-toxicity", action="store_true", help="skip the toxicity screen")
+    p.add_argument("--log-drops", action="store_true",
+                   help="write dropped.jsonl: every dropped document, with its reason")
     p.add_argument("--eu-ai-act", action="store_true",
                    help="write the report on the EU AI Office template shape")
     p.add_argument("--max-docs", type=int, default=0)
@@ -1634,6 +1647,9 @@ def main(argv=None) -> int:
                         "not a threshold")
     p.add_argument("--pii", default="redact", choices=("keep", "redact", "drop"))
     p.add_argument("--eval-set", default="", help="drop contaminated docs when given")
+    p.add_argument("--log-drops", action="store_true",
+                   help="write dropped.jsonl: one line per dropped document with "
+                        "its reason and a text preview (as sensitive as the corpus)")
     p.add_argument("--shards", default="", help="comma list to build a subset (partial build)")
     p.add_argument("--emit", default="none", choices=("none", "text"),
                    help="none = hash-only manifest; text = write filtered shards")
