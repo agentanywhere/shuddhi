@@ -1,3 +1,8 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/brand/shuddhi-horizontal-dark.svg">
+  <img alt="Shuddhi" src="docs/img/brand/shuddhi-horizontal-light.svg" width="300">
+</picture>
+
 # Shuddhi (शुद्धि) — Data Factory
 
 **A receipts-first data factory for sovereign AI.** Shuddhi turns raw text

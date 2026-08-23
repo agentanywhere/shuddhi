@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Shuddhi — prove what your model was trained on">
+<rect width="1200" height="630" fill="#04050d"/>
+<g transform="translate(96,150) scale(1.5)"><path d="M66.00,12.00 L52.71,25.10 L34.26,22.31 L31.21,40.73 L14.64,49.31 L23.00,66.00 L14.64,82.69 L31.21,91.27 L34.26,109.69 L52.71,106.90 L66.00,120.00 L79.29,106.90 L97.74,109.69 L100.79,91.27 L117.36,82.69 L109.00,66.00 L117.36,49.31 L100.79,40.73 L97.74,22.31 L79.29,25.10 L66.00,12.00 Z" fill="none" stroke="#3a81f6" stroke-width="9.0" stroke-linejoin="round" stroke-linecap="round"/><circle cx="66" cy="66" r="12.0" fill="#3a81f6"/></g>
+<text x="96" y="428" font-family="IBM Plex Sans, Geist, Helvetica Neue, Arial, sans-serif"
+      font-size="66" font-weight="600" letter-spacing="-1.4" fill="#f0f1f9">Shuddhi</text>
+<text x="96" y="486" font-family="IBM Plex Sans, Geist, Helvetica Neue, Arial, sans-serif"
+      font-size="30" fill="#a1a4b2">Prove what your model was trained on.</text>
+<text x="96" y="536" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace"
+      font-size="21" fill="#3a81f6">Apache-2.0 · github.com/agentanywhere/shuddhi</text>
+</svg>
