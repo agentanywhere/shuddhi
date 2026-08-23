@@ -46,7 +46,7 @@ def measure(tmp_path, reg_path):
     return str(out)
 
 
-def test_build_filters_and_chains(tmp_path):
+def test_build_filters_and_records_parent_hash(tmp_path):
     reg_path, _ = make_corpus(tmp_path)
     run_dir = measure(tmp_path, reg_path)
     build_out = tmp_path / "build"
@@ -347,3 +347,37 @@ def test_a_thin_perplexity_sample_disables_the_filter(tmp_path, capsys):
         "a filter with no usable distribution must drop nothing"
     assert bm["filter_config"]["max_bits_per_char"] == {}
     assert "perplexity filter is OFF" in capsys.readouterr().err
+
+
+def test_filtered_build_hash_covers_documents_not_configuration(tmp_path):
+    """Pins the actual semantics, which the docs once described backwards.
+
+    `filtered_build_hash` is a content hash of the SELECTED documents. It does
+    not fold in `filter_config_sha256` -- deliberately, because a hash that
+    included the config could not be recomputed by a third party holding only
+    the source files, and independent verifiability is the whole point.
+
+    So two builds that select the same documents by different means share a
+    build hash and are told apart by their config sha. The docs claimed the
+    opposite in six places, including inside the generated EU AI Act summary.
+    """
+    import json
+
+    reg_path, _ = make_corpus(tmp_path)
+    run_dir = measure(tmp_path, reg_path)
+    a = tmp_path / "a"
+    b = tmp_path / "b"
+    # Same selection, different configuration: PII policy changes emitted text
+    # but not which documents were chosen.
+    assert factory.main(["build", "--registry", reg_path, "--run-dir", run_dir,
+                         "--build-out", str(a), "--emit", "text", "--pii", "keep"]) == 0
+    assert factory.main(["build", "--registry", reg_path, "--run-dir", run_dir,
+                         "--build-out", str(b), "--emit", "text", "--pii", "redact"]) == 0
+    ma = json.loads((a / "BUILD-MANIFEST.json").read_text())
+    mb = json.loads((b / "BUILD-MANIFEST.json").read_text())
+
+    assert ma["kept_docs"] == mb["kept_docs"]
+    assert ma["filtered_build_hash"] == mb["filtered_build_hash"], \
+        "build hash must depend on the selected documents only"
+    assert ma["filter_config_sha256"] != mb["filter_config_sha256"], \
+        "the config sha is what distinguishes these two builds"

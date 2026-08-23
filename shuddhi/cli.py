@@ -23,8 +23,8 @@ Subcommands:
   build   Applied-filter build over a MEASURED run (run -> merge -> build):
           exact-dedup keep-first, quality threshold, per-language
           perplexity cutoff, contamination drop, PII policy. Emits a
-          BUILD-MANIFEST.json whose filtered_build_hash is chained to the
-          parent corpus_build_hash + the filter-config sha.
+          BUILD-MANIFEST.json whose filtered_build_hash is recorded with
+          the parent corpus_build_hash + the filter-config sha.
 
 Design rule: numbers computed over the full corpus are labelled full_pass;
 numbers computed on the sample carry their exact coverage. The two are never
@@ -179,7 +179,7 @@ def cmd_plugins(args) -> int:
                 print(f"      {k}: {v}")
         except Exception as e:
             print(f"  {name}  [BROKEN: {e}]")
-    print("\nEnable with: factory.py build ... --plugin <name>")
+    print("\nEnable with: shuddhi build ... --plugin <name>")
     return 0
 
 
@@ -250,7 +250,7 @@ def _explain(exc: BaseException) -> tuple[str, str] | None:
 def cmd_doctor(args) -> int:
     """Report whether this interpreter can run the pipeline, and what is
     missing. Exists because the most common failure by far is running
-    factory.py with a different Python than the one the dependencies were
+    shuddhi with a different Python than the one the dependencies were
     installed into (system python vs venv vs conda)."""
     ready = True
     print(f"python      {platform.python_version()}  ({sys.executable})")
@@ -852,8 +852,8 @@ def cmd_build(args) -> int:
     if args.lm_dir and not max_bits and not thin_ppx:
         print("WARNING: --lm-dir was given but the measured run has no perplexity "
               "statistics, so the perplexity filter will do NOTHING. Train the "
-              "language models FIRST (factory.py train-lm), then re-run "
-              "`factory.py run ... --lm <lang>.lm.gz` so the distribution is "
+              "language models FIRST (shuddhi train-lm), then re-run "
+              "`shuddhi run ... --lm <lang>.lm.gz` so the distribution is "
               "measured, then build.", file=sys.stderr)
 
     cfg = FilterConfig(

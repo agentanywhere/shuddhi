@@ -90,11 +90,21 @@ registry              source · licence · date · data_class, per shard
    │                  (customer-class data refused here, in code, no override)
    ├─► corpus_build_hash     content hash of the accepted document set
    ├─► filter_config_sha     every threshold + droplist + lexicon shas
-   └─► filtered_build_hash   chained to both — the string training cites
+   ├─► filtered_build_hash   content hash of the SELECTED set — training cites this
+   └─► output file sha256    the bytes actually emitted, per shard
 ```
 
 Order-independent, recomputable by anyone holding the shards, and unchanged
 by parallelism. No signature to trust, no server to ask.
+
+Those are four answers to four different questions, and keeping them
+separate is deliberate. `filtered_build_hash` is computed over the selected
+documents **only** — not over the config that selected them — because that
+is what makes it independently checkable: anyone holding the same source
+files can recompute it without knowing how you configured anything. Chaining
+the config into it would have made the number unverifiable by exactly the
+people it exists to convince. The config sha and the output shas sit beside
+it in the same manifest, so nothing is lost.
 
 ---
 

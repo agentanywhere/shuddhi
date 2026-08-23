@@ -14,7 +14,7 @@ So rather than compete for throughput — a fight against NVIDIA's GPU dedup
 that we would lose and that helps nobody — Shuddhi attests what another tool
 produced:
 
-    factory.py attest --corpus ./out-from-datatrove/ --corpus-id fineweb-slice
+    shuddhi attest --corpus ./out-from-datatrove/ --corpus-id fineweb-slice
 
 The output is a fingerprint computed with the SAME hash definition a native
 Shuddhi build uses, so an attested corpus and a Shuddhi-built one are

@@ -1,6 +1,6 @@
 """A local viewer for the builds on this machine.
 
-`factory.py ui` serves a dashboard over the output directories Shuddhi has
+`shuddhi ui` serves a dashboard over the output directories Shuddhi has
 already written: build history, the datasets that went in, live progress for
 a run happening right now, every warning and error, and the receipt to
 download.

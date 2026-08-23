@@ -86,7 +86,7 @@ shuddhi build --registry configs/reference-sangraha.json \
   --pii redact --eval-set eval-set.jsonl --emit none
 ```
 
-**The chained hash.** A build's `filtered_build_hash` is computed with the
+**The build hash.** A build's `filtered_build_hash` is computed with the
 same definition as the parent `corpus_build_hash` and recorded alongside the
 parent hash + the sha256 of the exact filter config. Same raw files + same
 config ⇒ same filtered hash, emission or not. Build also verifies integrity:

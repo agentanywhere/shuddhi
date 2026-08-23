@@ -16,11 +16,13 @@ A plugin is an object with:
     check(text)     -> str | None   a drop reason, or None to keep
 
 `identity()` is the load-bearing method. Whatever it returns is folded into
-the build's `filter_config_sha256`, which is chained into
+the build's `filter_config_sha256`, which is recorded beside
 `filtered_build_hash`. **A plugin that changes its behaviour without
-changing its identity breaks the receipt** — it would let two different
-corpora claim the same hash. Include model file shas, thresholds, rule-pack
-versions: anything a reviewer would need to reproduce your verdicts.
+changing its identity breaks the receipt** — the build manifest would then
+claim a selection process that cannot account for the documents selected,
+and a reviewer re-running your build would silently get a different corpus.
+Include model file shas, thresholds, rule-pack versions: anything a reviewer
+would need to reproduce your verdicts.
 
 ## Registering
 
@@ -31,7 +33,7 @@ Declare an entry point in the plugin package's pyproject.toml:
 
 Then enable it per build:
 
-    factory.py build ... --plugin acme-medical-phi
+    shuddhi build ... --plugin acme-medical-phi
 
 Plugins are opt-in. Installing a package never silently changes what a build
 keeps — you must name it on the command line, and once you do, its identity
