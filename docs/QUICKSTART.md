@@ -107,7 +107,14 @@ shuddhi extract --in-dir ./my-html/ --out corpus/news_eng.txt
 ### A registry
 
 The registry is the doorway: every shard declares where it came from, and
-nothing enters without one. Save this as `my-registry.json`:
+nothing enters without one. Start from the bundled example rather than
+typing one out:
+
+```bash
+cp examples/registry.json my-registry.json
+```
+
+Then edit it. It should end up looking like this:
 
 ```json
 {
@@ -126,6 +133,11 @@ nothing enters without one. Save this as `my-registry.json`:
   ]
 }
 ```
+
+**Paths are resolved from the directory you run Shuddhi in**, not from
+wherever the registry file happens to sit. Keeping the registry at the root
+of your project and using paths relative to it — `corpus/news_eng.txt` —
+is the arrangement that behaves predictably.
 
 `data_class` must be `public`, `licensed` or `synthetic-own`. Anything tagged
 `customer`, `customer-derived` or `evaluation-only` is refused, as is
