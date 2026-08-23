@@ -179,6 +179,16 @@ You will hit this immediately if you point `pipeline` at the bundled
 `examples/registry.json`, because that example ships a `customer`-class shard
 on purpose so you can watch it be refused. That stop is the product working.
 
+Expect `pipeline` to keep **38** of the example's 42 documents, not the 34
+the demo in section 1 keeps. Same corpus, two honest answers: the demo
+script passes the example lexicon and eval set explicitly and lowers the
+perplexity floor so every filter visibly fires on a 42-document toy.
+`pipeline` uses production defaults — the perplexity filter stays off below
+200 scored documents (and the receipt says so, rather than showing a zero
+that looks like a clean screen), and contamination only runs against an eval
+set you give it with `--eval-set`. On a real corpus the defaults are the
+right ones.
+
 Language models, measurement, the corpus manifest, near-duplicate
 clustering, filtering, the cleaned corpus, an Article 53 draft and an HTML
 receipt. It runs the stages in the right order, which matters more than it
