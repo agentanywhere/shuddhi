@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 480 128" role="img" aria-labelledby="td dd">
 <title id="td">Shuddhi</title>
-<desc id="dd">The Shuddhi seal beside the wordmark Shuddhi, with शुद्धि set beneath it.</desc>
-<g transform="translate(4,-2)"><path d="M66.00,12.00 L52.71,25.10 L34.26,22.31 L31.21,40.73 L14.64,49.31 L23.00,66.00 L14.64,82.69 L31.21,91.27 L34.26,109.69 L52.71,106.90 L66.00,120.00 L79.29,106.90 L97.74,109.69 L100.79,91.27 L117.36,82.69 L109.00,66.00 L117.36,49.31 L100.79,40.73 L97.74,22.31 L79.29,25.10 L66.00,12.00 Z" fill="none" stroke="#3a81f6" stroke-width="9.0" stroke-linejoin="round" stroke-linecap="round"/><circle cx="66" cy="66" r="12.0" fill="#3a81f6"/></g>
+<desc id="dd">The Shuddhi flask beside the wordmark Shuddhi, with शुद्धि set beneath it.</desc>
+<g transform="translate(4,-2)"><path d="M45.5,22.0 L45.5,53.9 A30.0,30.0 0 1 0 66.5,53.9 L66.5,22.0" fill="none" stroke="#3a81f6" stroke-width="10.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M38.5,22.0 L73.5,22.0" fill="none" stroke="#3a81f6" stroke-width="10.5" stroke-linecap="round"/><path d="M66.5,37.0 L97.5,54.0" fill="none" stroke="#3a81f6" stroke-width="10.5" stroke-linecap="round"/><circle cx="101.5" cy="76.0" r="7.6" fill="#3a81f6"/></g>
 <text x="150" y="66" font-family="IBM Plex Sans, Geist, Helvetica Neue, Arial, sans-serif"
       font-size="44" font-weight="600" letter-spacing="-0.8" fill="#f0f1f9">Shuddhi</text>
 <text x="152" y="94" font-family="Noto Sans Devanagari, Kohinoor Devanagari, Devanagari MT, sans-serif"
