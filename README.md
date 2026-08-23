@@ -50,7 +50,7 @@ No Docker? `make venv` or `make conda`, then `./scripts/demo.sh`.
 python3 factory.py ui --dir shuddhi-out/
 ```
 
-![The Shuddhi viewer: receipts, corpus measurements, drops by reason, and the datasets that went in](docs/img/ui-light.png)
+![The Shuddhi viewer: receipts, corpus measurements, drops by reason, and the datasets that went in](docs/img/ui.png)
 
 Build history, the datasets that went in, live progress while a run is
 happening, every warning and error, and the receipt to download. It reads
@@ -311,6 +311,21 @@ running it as an organisation is paid.**
 
 The discipline that keeps this honest: if a commercial feature needs an engine
 change, that engine change is made here, in the open repository.
+
+## Use it in CI
+
+The provenance gate is designed to be a merge gate — `check` exits non-zero
+when any shard is untagged or carries a customer data class, so an unreviewed
+dataset cannot land:
+
+```bash
+docker run --rm -v "$PWD:/work" ghcr.io/agentanywhere/shuddhi:1.2.0 \
+    check --registry /work/registry.json
+```
+
+Copy-paste configurations for GitHub Actions, GitLab CI, Azure Pipelines,
+Bitbucket Pipelines, CircleCI and Jenkins are in [`ci/`](ci/) — each gates
+pull requests and publishes the receipt as a build artefact.
 
 ## Contact
 

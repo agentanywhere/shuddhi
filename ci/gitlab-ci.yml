@@ -1,0 +1,33 @@
+# GitLab CI — gate on provenance, then publish the receipt.
+variables:
+  SHUDDHI_IMAGE: ghcr.io/agentanywhere/shuddhi:1.2.0
+
+stages: [gate, build]
+
+provenance-gate:
+  stage: gate
+  image: $SHUDDHI_IMAGE
+  script:
+    # The image entrypoint is the CLI, so override it for a raw command.
+    - python /app/factory.py check --registry registry.json
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+
+corpus-build:
+  stage: build
+  image: $SHUDDHI_IMAGE
+  needs: [provenance-gate]
+  script:
+    - python /app/factory.py pipeline --registry registry.json --out shuddhi-out --emit none
+    - python -c "import json;m=json.load(open('shuddhi-out/build/BUILD-MANIFEST.json'));print('filtered_build_hash',m['filtered_build_hash'])"
+  artifacts:
+    name: corpus-receipt-$CI_COMMIT_SHORT_SHA
+    when: always
+    expire_in: 1 year
+    paths:
+      - shuddhi-out/build/BUILD-MANIFEST.json
+      - shuddhi-out/run/MANIFEST.json
+      - shuddhi-out/report.html
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH

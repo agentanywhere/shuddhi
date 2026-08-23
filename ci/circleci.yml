@@ -1,0 +1,38 @@
+# CircleCI — gate on provenance, then publish the receipt.
+version: 2.1
+
+executors:
+  shuddhi:
+    docker:
+      - image: ghcr.io/agentanywhere/shuddhi:1.2.0
+    working_directory: ~/repo
+
+jobs:
+  provenance-gate:
+    executor: shuddhi
+    steps:
+      - checkout
+      - run:
+          name: Check the registry
+          command: python /app/factory.py check --registry registry.json
+
+  corpus-build:
+    executor: shuddhi
+    steps:
+      - checkout
+      - run:
+          name: Build the corpus
+          command: python /app/factory.py pipeline --registry registry.json --out shuddhi-out --emit none
+      - store_artifacts:
+          path: shuddhi-out
+          destination: corpus-receipt
+
+workflows:
+  corpus:
+    jobs:
+      - provenance-gate
+      - corpus-build:
+          requires: [provenance-gate]
+          filters:
+            branches:
+              only: main

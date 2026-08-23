@@ -1,0 +1,30 @@
+// Jenkins — gate on provenance, then archive the receipt.
+pipeline {
+  agent any
+  environment { SHUDDHI = 'ghcr.io/agentanywhere/shuddhi:1.2.0' }
+
+  stages {
+    stage('Provenance gate') {
+      steps {
+        // Non-zero exit when any shard is untagged or customer-class.
+        sh 'docker run --rm -v "$WORKSPACE:/work" $SHUDDHI check --registry /work/registry.json'
+      }
+    }
+    stage('Build the corpus') {
+      when { branch 'main' }
+      steps {
+        sh 'docker run --rm -v "$WORKSPACE:/work" $SHUDDHI pipeline --registry /work/registry.json --out /work/shuddhi-out --emit none'
+        sh '''python3 - <<'PY'
+import json
+m = json.load(open("shuddhi-out/build/BUILD-MANIFEST.json"))
+print("filtered_build_hash:", m["filtered_build_hash"])
+for w in m.get("warnings", []):
+    print("WARNING:", w)
+PY'''
+      }
+    }
+  }
+  post {
+    always { archiveArtifacts artifacts: 'shuddhi-out/**', allowEmptyArchive: true }
+  }
+}

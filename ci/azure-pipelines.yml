@@ -1,0 +1,30 @@
+# Azure Pipelines — gate on provenance, then publish the receipt.
+trigger:
+  branches: { include: [main] }
+pr:
+  branches: { include: ["*"] }
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  SHUDDHI: ghcr.io/agentanywhere/shuddhi:1.2.0
+
+stages:
+  - stage: Gate
+    jobs:
+      - job: ProvenanceGate
+        steps:
+          - script: docker run --rm -v "$(Build.SourcesDirectory):/work" $(SHUDDHI) check --registry /work/registry.json
+            displayName: Check the registry
+
+  - stage: Build
+    dependsOn: Gate
+    condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/main'))
+    jobs:
+      - job: CorpusBuild
+        steps:
+          - script: docker run --rm -v "$(Build.SourcesDirectory):/work" $(SHUDDHI) pipeline --registry /work/registry.json --out /work/shuddhi-out --emit none
+            displayName: Build the corpus
+          - publish: $(Build.SourcesDirectory)/shuddhi-out
+            artifact: corpus-receipt

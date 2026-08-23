@@ -902,16 +902,17 @@ def _write_html_report(out_dir: str, run_dir: str, build_dir: str) -> str | None
 <meta name=viewport content="width=device-width,initial-scale=1">
 <title>Corpus receipt — {esc(m['corpus_id'])}</title>
 <style>
- :root{{--fg:#0f172a;--muted:#64748b;--line:#e2e8f0;--accent:#1d4ed8;--warn:#b45309;--warnbg:#fffbeb;--ok:#047857}}
- @media(prefers-color-scheme:dark){{:root{{--fg:#e2e8f0;--muted:#94a3b8;--line:#1e293b;--accent:#60a5fa;--warnbg:#2a2113}}body{{background:#0b1220}}}}
+ :root{{--bg:#04050d;--panel:#0a0c18;--fg:#f0f1f9;--muted:#a1a4b2;--line:#242838;--accent:#3a81f6;
+   --ok:#00c380;--warn:#eba941;--warnbg:#1c1708}}
+ body{{background:var(--bg)}}
  *{{box-sizing:border-box}}
- body{{font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--fg);max-width:62rem;margin:0 auto;padding:2.5rem 1.25rem}}
+ body{{font:16px/1.6 Geist,"IBM Plex Sans",ui-sans-serif,system-ui,-apple-system,sans-serif;color:var(--fg);max-width:62rem;margin:0 auto;padding:2.5rem 1.25rem}}
  h1{{font-size:1.6rem;margin:0 0 .25rem}} h2{{font-size:1.15rem;margin:2.5rem 0 .75rem;padding-bottom:.4rem;border-bottom:1px solid var(--line)}}
  h3{{font-size:1rem;margin:1.5rem 0 .5rem}}
  .sub{{color:var(--muted);margin:0 0 2rem}}
- .receipt{{display:flex;flex-wrap:wrap;gap:.5rem;align-items:baseline;padding:.6rem .8rem;border:1px solid var(--line);border-radius:.5rem;margin-bottom:.5rem}}
+ .receipt{{display:flex;flex-wrap:wrap;gap:.5rem;align-items:baseline;padding:.6rem .8rem;border:1px solid var(--line);border-radius:.625rem;background:var(--panel);margin-bottom:.5rem}}
  .receipt .label{{color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;min-width:11rem}}
- code{{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem;word-break:break-all}}
+ code{{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem;word-break:break-all}}
  table{{border-collapse:collapse;width:100%;font-size:.9rem}}
  th,td{{text-align:left;padding:.45rem .6rem;border-bottom:1px solid var(--line)}}
  th{{color:var(--muted);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}}
@@ -920,7 +921,7 @@ def _write_html_report(out_dir: str, run_dir: str, build_dir: str) -> str | None
  .warn{{background:var(--warnbg);border-left:3px solid var(--warn);padding:.7rem .9rem;margin:.75rem 0;border-radius:.25rem}}
  .ok{{color:var(--ok)}} .muted{{color:var(--muted)}}
  ul.refused li{{margin-bottom:.4rem}}
- pre{{background:rgba(127,127,127,.09);padding:.9rem;border-radius:.5rem;overflow-x:auto;font-size:.8rem}}
+ pre{{background:var(--panel);padding:.9rem;border-radius:.5rem;overflow-x:auto;font-size:.8rem}}
  footer{{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}}
 </style>
 <h1>Corpus receipt — {esc(m['corpus_id'])}</h1>
