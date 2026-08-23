@@ -89,7 +89,8 @@ different Python than the one you installed into.
 
 ### Your data
 
-Plain UTF-8 text, **one blank line between documents**:
+Plain UTF-8 text, **one blank line between documents**. Unix or Windows line
+endings both work, and both produce the same hashes:
 
 ```
 First document. It can span
