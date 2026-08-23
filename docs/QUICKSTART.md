@@ -166,6 +166,19 @@ anything is refused, which is deliberate — that makes it a CI gate.
 shuddhi pipeline --registry my-registry.json --out shuddhi-out/
 ```
 
+**If your registry has any refused shard, `pipeline` stops rather than
+quietly building without it.** That is deliberate: a corpus missing a shard
+you thought was in it is worse than no corpus. Fix the registry, or say
+explicitly that you want the accepted shards only:
+
+```bash
+shuddhi pipeline --registry my-registry.json --out shuddhi-out/ --allow-refusals
+```
+
+You will hit this immediately if you point `pipeline` at the bundled
+`examples/registry.json`, because that example ships a `customer`-class shard
+on purpose so you can watch it be refused. That stop is the product working.
+
 Language models, measurement, the corpus manifest, near-duplicate
 clustering, filtering, the cleaned corpus, an Article 53 draft and an HTML
 receipt. It runs the stages in the right order, which matters more than it
