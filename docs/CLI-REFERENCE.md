@@ -124,6 +124,48 @@ Lists installed filter plugins with their versions and identities. See
 
 ---
 
+## `attest` — fingerprint a corpus you did not build here
+
+Produces a receipt for a corpus produced by another tool (NeMo Curator,
+DataTrove, Dolma, your own scripts), using the **same hash definition** a
+native build uses, so the two are comparable and verifiable the same way.
+
+| flag | default | meaning |
+|---|---|---|
+| `--corpus` | required | directory of documents to attest |
+| `--corpus-id` | required | the name this corpus is known by |
+| `--registry` | — | attest against declared provenance instead of `UNKNOWN` |
+| `--scan` | off | also measure PII and toxicity across the corpus |
+| `--out` | stdout | write `ATTESTATION.json` here |
+
+An attestation proves **content, not acquisition**: it binds a corpus to a
+hash and reports what is inside it. Without `--registry`, provenance fields
+read `UNKNOWN` rather than blank — a blank reads as "nothing to declare",
+which is the dangerous misreading. If the producing tool left a manifest it
+is *cited, never verified* — we did not observe that run.
+
+---
+
+## `report` — regulatory summary from a build
+
+| flag | default | meaning |
+|---|---|---|
+| `--registry` | required | the registry whose provenance is summarised |
+| `--eu-ai-act` | off | use the EU AI Office template shape (Article 53(1)(d)) |
+| `--manifest` | — | `BUILD-MANIFEST.json`, binding the summary to a reproducible build |
+| `--out` | stdout | write here instead of stdout |
+
+Pass the `BUILD-MANIFEST.json` that `build` writes, not the corpus
+`MANIFEST.json` that `run` writes — only the former records a filter
+configuration, and a training-content summary that cannot name the filters
+is describing a corpus nobody built.
+
+Nothing is computed specially for this: `source`, `license`, `data_class`,
+`language` and `date_acquired` are already required registry fields, so the
+summary is a projection of what admission recorded.
+
+---
+
 ## `build-union --build-outs <a,b,...> --out <dir>`
 
 Unions disjoint partition builds into one manifest. The result is identical

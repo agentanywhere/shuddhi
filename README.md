@@ -75,6 +75,27 @@ by parallelism. No signature to trust, no server to ask.
 
 ---
 
+## Who this is for
+
+- **Anyone training or fine-tuning on data they will have to account for** —
+  because a customer, a regulator, an acquirer or a court eventually asks what
+  the model learned from, and "we were careful" is not an answer.
+- **Regulated industries** — banking, insurance, defence, healthcare — where
+  excluding customer data must be demonstrable rather than asserted.
+- **Sovereign and public-money AI programmes** that owe the public an account
+  of their training data.
+- **Providers of general-purpose models placed on the EU market**, who owe the
+  AI Office an Article 53(1)(d) summary.
+- **Teams working in Indic languages** — the language ID, script handling and
+  tokenizer tooling were built for 15 Indian languages, not retrofitted onto
+  an English pipeline.
+- **Researchers** who need benchmark-contamination screening they can point at.
+
+If you are cleaning a scratch dataset nobody will ever audit, you do not need
+this — reach for a curation pipeline and move on.
+
+---
+
 ## For the EU AI Act
 
 Article 53(1)(d) of Regulation (EU) 2024/1689 requires every provider placing a
@@ -127,6 +148,21 @@ The fingerprint uses the **same hash definition** a native build uses, so an
 attested corpus and a Shuddhi-built one are verifiable the same way and
 comparable to each other. If the producing tool left a manifest, it is *cited,
 never verified* — we did not observe that run.
+
+|                          | Shuddhi | Curation pipelines |
+|---|---|---|
+| Primary output           | a corpus **and a receipt** | a corpus |
+| Corpus identity          | reproducible content-addressed hash | filenames and a README |
+| Filter settings          | pinned into the corpus's identity | recorded by convention, if at all |
+| Data-policy enforcement  | refused in code, no override | policy documents and review |
+| Regulatory output        | Article 53(1)(d) summary from the manifest | — |
+| Custom filters           | plugin API; identity enters the receipt | usually fork or patch |
+| Throughput               | CPU-first, one machine to a few dozen cores | higher, often GPU/cluster |
+| Setup                    | `docker run`; no account, no telemetry | varies |
+
+Read it this way: they are optimised for **getting a corpus clean**, Shuddhi for
+**being able to prove what a corpus is**. The two compose — clean with theirs,
+attest with this.
 
 An attestation proves **content, not acquisition**. It binds a corpus to a hash
 and reports what is inside it; it cannot establish where the data came from or
@@ -231,6 +267,28 @@ We are stating this because the alternative is well documented: several
 open-core projects relicensed after adoption, and what they lost was not revenue
 but the willingness of anyone to build on them again.
 
+| | Open source (Apache-2.0) | Commercial |
+|---|---|---|
+| Engine, CLI, every built-in filter | ✅ | |
+| Provenance gate + customer-data refusal | ✅ | |
+| Receipt generation **and verification** | ✅ forever | |
+| Dedup, quality, perplexity, toxicity, PII, contamination | ✅ | |
+| Applied builds, partition builds, chained hashes | ✅ | |
+| Attesting corpora from other tools | ✅ | |
+| Article 53(1)(d) summary generation | ✅ | |
+| Plugin API | ✅ | |
+| Docker, docs, community issues | ✅ | |
+| Hosted registry — signed org-wide ledger, model→corpus→licence lookup, retention, legal hold, SSO/RBAC | | ✅ |
+| Team workflow — review queues, approvals, sign-off | | ✅ |
+| Compliance packs — NER-class PII, classifier-tier toxicity, sector rule packs | | ✅ |
+| Cross-build analytics, corpus drift, filter-yield comparison | | ✅ |
+| Multi-node scale-out, incremental and resumable builds | | ✅ |
+| SLA, air-gapped deployment, named support | | ✅ |
+
+Commercial filters ship through the **same public plugin API** anyone else uses,
+and a paid filter still cannot change a corpus without changing that corpus's
+receipt.
+
 What is commercial: a hosted registry with signed attestation, team review
 workflow, cross-build analytics, air-gapped deployment and support. The engine
 demands a named human reviewer for a suspect shard and gives you no way to manage
@@ -239,6 +297,19 @@ running it as an organisation is paid.**
 
 The discipline that keeps this honest: if a commercial feature needs an engine
 change, that engine change is made here, in the open repository.
+
+## Contact
+
+- **Bugs, questions, feature requests** — open a
+  [GitHub issue](https://github.com/agentanywhere/shuddhi/issues).
+- **Security and receipt-integrity reports** — privately, see
+  [SECURITY.md](SECURITY.md).
+- **Commercial, design partnership, deployment help** —
+  [sales@shephertz.com](mailto:sales@shephertz.com) or
+  [agentanywhere.ai/shuddhi](https://agentanywhere.ai/shuddhi).
+
+We are actively looking for design partners for the hosted registry. If you
+have a corpus you have to account for, we would like to hear about it.
 
 ## Licence
 
