@@ -168,6 +168,13 @@ Most of the time this is the whole thing:
 shuddhi pipeline --registry my-registry.json --out shuddhi-out/
 ```
 
+If any shard is refused, `pipeline` stops instead of building without it —
+a corpus quietly missing a shard you believed was in it is worse than no
+corpus at all. Either fix the registry, or state the intent explicitly with
+`--allow-refusals`, which builds from the accepted shards and records the
+refusals in the manifest. The bundled `examples/registry.json` ships a
+`customer`-class shard deliberately, so it triggers this on the first try.
+
 `pipeline` runs every stage below in the correct order and writes the
 manifests, the cleaned corpus, a regulatory draft and an HTML receipt. The
 ordering is not cosmetic: the language models must be trained *before* the
