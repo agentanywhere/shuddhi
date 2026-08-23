@@ -346,7 +346,7 @@ def test_a_thin_perplexity_sample_disables_the_filter(tmp_path, capsys):
     assert bm["dropped_by_reason"]["perplexity"] == 0, \
         "a filter with no usable distribution must drop nothing"
     assert bm["filter_config"]["max_bits_per_char"] == {}
-    assert "perplexity filter is OFF" in capsys.readouterr().err
+    assert "PERPLEXITY FILTER OFF" in capsys.readouterr().err
 
 
 def test_filtered_build_hash_covers_documents_not_configuration(tmp_path):
@@ -381,3 +381,48 @@ def test_filtered_build_hash_covers_documents_not_configuration(tmp_path):
         "build hash must depend on the selected documents only"
     assert ma["filter_config_sha256"] != mb["filter_config_sha256"], \
         "the config sha is what distinguishes these two builds"
+
+
+def test_perplexity_off_is_recorded_in_the_receipt(tmp_path, capsys):
+    """When the perplexity filter cannot run (too few scored documents for a
+    percentile to mean anything), the receipt must say so. Until this test
+    the fact went to stderr only, and BUILD-MANIFEST.json showed
+    'perplexity: 0' -- which reads as "screened, nothing found" to anyone
+    holding just the manifest. Not screened and clean are different claims."""
+    reg_path, _ = make_corpus(tmp_path)
+    lm_dir = tmp_path / "lms"
+    assert factory.main(["train-lm", "--registry", reg_path, "--shard", "eng",
+                         "--lm-dir", str(lm_dir), "--sample-every", "1"]) == 0
+    run = tmp_path / "run"
+    assert factory.main(["run", "--registry", reg_path, "--shard", "eng",
+                         "--out", str(run), "--sample-every", "1",
+                         "--lm", str(lm_dir / "eng.lm.gz")]) == 0
+    assert factory.main(["merge", "--registry", reg_path, "--out", str(run)]) == 0
+
+    out = tmp_path / "b"
+    # default --min-ppx-sample (200) is far above this fixture's ~23 docs
+    assert factory.main(["build", "--registry", reg_path, "--run-dir", str(run),
+                         "--build-out", str(out), "--lm-dir", str(lm_dir),
+                         "--emit", "none"]) == 0
+    bm = json.loads((out / "BUILD-MANIFEST.json").read_text())
+    assert bm["dropped_by_reason"]["perplexity"] == 0
+    recorded = [w for w in bm["warnings"] if "PERPLEXITY FILTER OFF" in w]
+    assert recorded, "the receipt must say the filter did not run"
+    assert "NOT SCREENED" in recorded[0]
+    assert "PERPLEXITY FILTER OFF" in capsys.readouterr().err
+
+
+def test_thin_lm_advice_is_followable(tmp_path, capsys):
+    """The thin-model warning used to say 'Re-run with --sample-every 1' when
+    --sample-every was already 1. Advice that cannot be acted on is noise at
+    best; at worst it sends someone in a loop. The fix must depend on
+    whether sampling was actually the cause."""
+    reg_path, _ = make_corpus(tmp_path)
+    lm_dir = tmp_path / "lms"
+    assert factory.main(["train-lm", "--registry", reg_path, "--shard", "eng",
+                         "--lm-dir", str(lm_dir), "--sample-every", "1"]) == 0
+    err = capsys.readouterr().err
+    assert "WARNING" in err
+    assert "Re-run with --sample-every 1" not in err, \
+        "told the user to do what they had already done"
+    assert "--no-perplexity" in err
