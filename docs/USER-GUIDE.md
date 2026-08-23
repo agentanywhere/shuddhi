@@ -498,6 +498,25 @@ advice and not a filing.
 
 Worth knowing before you rely on any of it:
 
+- **The gate enforces your declaration, not the file's true nature.** This is
+  the most important limit here, so it goes first. Shuddhi refuses a shard
+  *declared* `customer`, and no flag, environment variable, extra JSON field
+  or casing trick admits one — unknown and malformed classes are refused too,
+  because it fails closed. What it cannot do is read a file and tell you that
+  the `public` label on it is a lie. The suspect-name rule catches the
+  careless case (`customer_export.txt`, a source of "Acme Corp"), and it is a
+  heuristic on names: a file called `cust.txt` or `exp_2024.txt` tagged
+  `public` will pass.
+
+  So the honest claim is narrow and still useful: the gate makes the
+  declaration **mandatory, mechanical, and permanent**. Someone has to write
+  down where every shard came from before anything is read, CI can refuse a
+  build on it, and the declaration is recorded in the receipt — so a later
+  auditor can hold a named person to what they wrote. It converts "we have a
+  policy about customer data" into "the build fails without a signed answer".
+  It is not a content classifier, and we would rather say so than have you
+  discover it.
+
 - **Quality scoring is heuristic.** It screens junk; it does not rank prose.
   A distilled classifier is the upgrade path.
 - **Toxicity is a lexicon.** No context, no sarcasm, no implicit abuse.
