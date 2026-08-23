@@ -128,6 +128,7 @@ measured run, or it fails loudly.
 | `--min-quality` | `0.5` | drop documents scoring below this |
 | `--lm-dir` | — | `<lang>.lm.gz` models; enables the perplexity filter |
 | `--ppx-percentile` | `99` | cutoff percentile (`50`, `90`, `99`) |
+| `--min-ppx-sample` | `200` | documents that must have been scored before a percentile is trusted; below it the filter switches off and says so |
 | `--neardup-drop` | — | drop list from `neardup-merge` |
 | `--toxicity` | off | drop lexicon-flagged documents |
 | `--toxicity-lexicon-dir` | — | `<lang>.txt` lists merged with the built-ins |

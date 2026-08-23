@@ -56,6 +56,8 @@ from .progress import Reporter, bad, dim, human, ok, warn
 FACTORY_VERSION = "1.2.0"
 
 DEFAULT_SAMPLE_EVERY = 50
+# Below this many scored documents a percentile is noise, not a threshold.
+MIN_PPX_SAMPLE = 200
 DEFAULT_MINHASH_EVERY = 4
 DEFAULT_TOKEN_EVERY = 20
 DEFAULT_TOKEN_BYTE_BUDGET = 30_000_000
@@ -357,6 +359,23 @@ def cmd_init(args) -> int:
         raise UserError(f"{args.out} already exists",
                         "Pass --force to overwrite it.")
 
+    # Provenance can be declared on the command line. That keeps the gate
+    # honest — a human still states where the data came from — while making
+    # the first run copy-pasteable instead of "now hand-edit this JSON".
+    declared = {
+        "source": args.source,
+        "license": args.license,
+        "date_acquired": args.date_acquired,
+        "data_class": args.data_class,
+    }
+
+    # A blanket --data-class over a folder is a footgun: one customer export
+    # sitting in it would be labelled synthetic-own by a flag the user typed
+    # once. The registry already refuses suspiciously-named shards until a
+    # human reviews them; init honours the same rule and simply declines to
+    # classify those files, whatever was passed.
+    suspicious = []
+
     shards = []
     for fn in files:
         stem = os.path.splitext(fn)[0]
@@ -364,13 +383,19 @@ def cmd_init(args) -> int:
         # (news_eng.txt); use it as a suggestion, never as a fact.
         tail = stem.rsplit("_", 1)[-1].lower() if "_" in stem else ""
         language = tail if (args.language is None and len(tail) == 3) else (args.language or "")
+        path = os.path.join(corpus, fn)
+        looks_sensitive = bool(registry_mod.SUSPECT_PATTERN.search(f"{stem} {path}"))
+        if looks_sensitive:
+            suspicious.append(stem)
         shards.append({
             "shard_id": stem,
-            "path": os.path.join(corpus, fn),
-            "source": "",
-            "license": "",
-            "date_acquired": "",
-            "data_class": "",
+            "path": path,
+            "source": declared["source"],
+            "license": declared["license"],
+            "date_acquired": declared["date_acquired"],
+            # Never inherit a blanket class for a file whose name suggests
+            # customer material.
+            "data_class": "" if looks_sensitive else declared["data_class"],
             "language": language,
         })
 
@@ -392,11 +417,23 @@ def cmd_init(args) -> int:
         f.write("\n")
 
     print(f"wrote {args.out} — {len(shards)} shard(s) from {corpus}")
+    if suspicious:
+        print(f"\n{warn('!')} left unclassified on purpose: "
+              f"{', '.join(suspicious)}")
+        print("  Those names suggest customer material. A blanket --data-class "
+              "is not applied\n  to them: classify each one yourself, and "
+              "remember that customer data is\n  refused outright — it is "
+              "evaluation-only, never training.")
     blank = sum(1 for sh in shards for k in ("source", "license", "date_acquired",
                                              "data_class") if not sh[k])
-    print(f"\n{blank} fields are empty and deliberately so: a shard is refused "
-          f"until you say where it came from.")
-    print("Fill them in, then:")
+    if blank:
+        print(f"\n{blank} field(s) are empty, deliberately: a shard is refused "
+              "until someone says where it came from. Fill them in, or declare "
+              "them on the command line:")
+        print(f"    shuddhi init --corpus {corpus} --out {args.out} --force \\")
+        print('        --source "..." --license CC-BY-4.0 --data-class public '
+              '--date-acquired 2026-01-01')
+    print("\nNext:")
     print(f"    shuddhi check --registry {args.out}")
     return 0
 
@@ -754,6 +791,7 @@ def cmd_build(args) -> int:
     # full build's and partition manifests union cleanly.
     max_bits: dict[str, float] = {}
     lms: dict[str, object] = {}
+    thin_ppx: list[tuple[str, str, int]] = []
     if args.lm_dir:
         from .ngram_lm import CharTrigramLM
 
@@ -766,7 +804,16 @@ def cmd_build(args) -> int:
                 st = json.load(f)
             ppx = st.get("ppx")
             lm_path = os.path.join(args.lm_dir, f"{s.language}.lm.gz")
-            if ppx and ppx.get("scored_docs") and os.path.exists(lm_path):
+            scored = (ppx or {}).get("scored_docs") or 0
+            if ppx and scored and os.path.exists(lm_path):
+                if scored < args.min_ppx_sample:
+                    # A percentile taken from a handful of documents is not a
+                    # threshold, it is an accident. Left unguarded this
+                    # silently gutted a 42-document corpus: the stride meant
+                    # ONE document was scored, so p99 was that document and
+                    # everything else exceeded it.
+                    thin_ppx.append((s.shard_id, s.language, scored))
+                    continue
                 max_bits[s.language] = ppx[f"p{args.ppx_percentile}"]
                 if s.language in build_langs and s.language not in lms:
                     lms[s.language] = CharTrigramLM.load(lm_path)
@@ -793,7 +840,13 @@ def cmd_build(args) -> int:
         tox_lexicon = (ToxicityLexicon.from_dir(args.toxicity_lexicon_dir)
                        if args.toxicity_lexicon_dir else ToxicityLexicon.builtin())
 
-    if args.lm_dir and not max_bits:
+    for shard_id, lang, scored in thin_ppx:
+        print(f"WARNING: {shard_id}: the perplexity filter is OFF for '{lang}' — "
+              f"only {scored} document(s) were scored during measurement, and a "
+              f"percentile from that many is meaningless. Re-measure with a "
+              f"smaller --sample-every to enable it.", file=sys.stderr)
+
+    if args.lm_dir and not max_bits and not thin_ppx:
         print("WARNING: --lm-dir was given but the measured run has no perplexity "
               "statistics, so the perplexity filter will do NOTHING. Train the "
               "language models FIRST (factory.py train-lm), then re-run "
@@ -1185,11 +1238,22 @@ def cmd_pipeline(args) -> int:
 
     n += 1
     step(n, total_steps, "measuring each shard")
+    # Sampling every 50th document is right for millions and wrong for
+    # thousands: it starves LID, quality, contamination and — most visibly —
+    # the perplexity distribution. Measure small shards in full.
+    stride = args.sample_every
+    if stride > 1:
+        smallest = min((os.path.getsize(sh.path) for sh in accepted), default=0)
+        if smallest < 40_000_000:
+            stride = 1
+            rep_note = ("corpus is small, so every document is measured "
+                        "rather than every %dth" % args.sample_every)
+            print(f"  ({rep_note})", flush=True)
     for sh in accepted:
         lm_path = os.path.join(lm_dir, f"{sh.language}.lm.gz")
         cmd_run(SimpleNamespace(
             registry=args.registry, shard=sh.shard_id, out=run_dir,
-            sample_every=args.sample_every, minhash_every=DEFAULT_MINHASH_EVERY,
+            sample_every=stride, minhash_every=DEFAULT_MINHASH_EVERY,
             token_every=DEFAULT_TOKEN_EVERY, token_byte_budget=DEFAULT_TOKEN_BYTE_BUDGET,
             max_docs=args.max_docs, eval_set=args.eval_set,
             fasttext_model=args.fasttext_model, tokenizer=args.tokenizer,
@@ -1219,6 +1283,7 @@ def cmd_pipeline(args) -> int:
         min_quality=args.min_quality,
         lm_dir=("" if args.no_perplexity else lm_dir),
         ppx_percentile=args.ppx_percentile,
+        min_ppx_sample=MIN_PPX_SAMPLE,
         neardup_drop=("" if args.no_neardup else drop_path),
         toxicity=not args.no_toxicity, toxicity_lexicon_dir=args.toxicity_lexicon_dir,
         eval_set=args.eval_set, pii=args.pii, shards="", emit=args.emit,
@@ -1471,6 +1536,15 @@ def main(argv=None) -> int:
                    help="ISO 639-3 code for every shard; otherwise guessed from "
                         "a filename suffix like news_eng.txt, else left empty")
     p.add_argument("--force", action="store_true", help="overwrite an existing file")
+    # Declaring provenance here is equivalent to typing it into the file —
+    # the point of the gate is that a human states it, not that they use an
+    # editor to do so.
+    p.add_argument("--source", default="", help="where the data came from")
+    p.add_argument("--license", default="", help="the licence you hold, e.g. CC-BY-4.0")
+    p.add_argument("--date-acquired", default="", metavar="YYYY-MM-DD")
+    p.add_argument("--data-class", default="",
+                   choices=["", "public", "licensed", "synthetic-own"],
+                   help="customer-derived classes are refused and cannot be set here")
     p.set_defaults(fn=cmd_init)
 
     p = sub.add_parser("check", help="validate a shard registry")
@@ -1509,6 +1583,13 @@ def main(argv=None) -> int:
     p.add_argument("--lm-dir", default="", help="dir of <lang>.lm.gz models; enables ppx filter")
     p.add_argument("--ppx-percentile", type=int, default=99, choices=(50, 90, 99),
                    help="per-language cutoff = this percentile of the measured run")
+    p.add_argument("--min-ppx-sample", type=int, default=MIN_PPX_SAMPLE,
+                   help="documents that must have been scored during "
+                        "measurement before a perplexity percentile is trusted "
+                        f"as a threshold (default {MIN_PPX_SAMPLE}). Below it "
+                        "the filter is switched off and says so, because a "
+                        "percentile from a handful of samples is an accident, "
+                        "not a threshold")
     p.add_argument("--pii", default="redact", choices=("keep", "redact", "drop"))
     p.add_argument("--eval-set", default="", help="drop contaminated docs when given")
     p.add_argument("--shards", default="", help="comma list to build a subset (partial build)")
