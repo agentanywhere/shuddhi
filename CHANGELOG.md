@@ -30,9 +30,13 @@ First public release.
 **Receipts**
 - `corpus_build_hash`: order-independent content hash of the accepted
   document set, reproducible on any machine.
-- `filtered_build_hash`: chained to the parent corpus hash and to
-  `filter_config_sha256`, which pins every threshold plus the shas of the
-  near-dup drop list, the toxicity lexicon, and any enabled plugin.
+- `filtered_build_hash`: content hash of the *selected* document set, by the
+  same definition as `corpus_build_hash` so the two are comparable, and
+  recorded alongside the parent hash.
+- `filter_config_sha256`: pins every threshold plus the shas of the near-dup
+  drop list, the toxicity lexicon, and any enabled plugin. Recorded beside
+  the build hash rather than mixed into it, so the build hash stays
+  recomputable by anyone holding only the source documents.
 - Build integrity: a build fails if any document is absent from the
   measured run's hash set, so a shard that changed after measurement cannot
   silently produce an unmeasured corpus.

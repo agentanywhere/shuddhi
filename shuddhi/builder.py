@@ -1,13 +1,24 @@
 """Applied-filter builds — stage 7b. Measurement becomes production.
 
-`factory.py build` consumes a *measured* run (run → merge → build, in that
+`shuddhi build` consumes a *measured* run (run → merge → build, in that
 order) and produces a filtered corpus build: the subset of documents that
-survive the configured filters, identified by a `filtered_build_hash` that is
-**chained** to the parent measurement:
+survive the configured filters, identified by a `filtered_build_hash`.
 
-    parent corpus_build_hash  (from MANIFEST.json of the measured run)
-      + filter_config sha256  (canonical JSON of every threshold used)
-      -> filtered_build_hash  (blake2b over the sorted kept doc-hash set)
+The manifest records three separate things, and they answer three different
+questions. Conflating them would be easy and wrong:
+
+    parent corpus_build_hash  what was measured, before filtering
+    filter_config sha256      HOW the selection was made (every threshold,
+                              droplist, lexicon and plugin identity)
+    filtered_build_hash       WHICH documents were selected -- blake2b over
+                              the sorted kept doc-hash set, and NOT over the
+                              config, so a third party holding only the
+                              source files can recompute it
+
+A fourth, per output file: the sha256 of the emitted bytes. That one moves
+when redaction changes the text, while filtered_build_hash does not -- the
+selected documents are the same either way. If you need to pin what the
+model actually read, cite the output shas as well.
 
 Determinism: same raw files + same config => same filtered hash, whether or
 not text is emitted. Emission (--emit text) additionally writes the kept

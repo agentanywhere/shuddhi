@@ -10,7 +10,7 @@ them:
 So this module renders the same events differently depending on whether it
 is attached to a TTY, and — regardless of either — appends every phase,
 warning and error to `events.jsonl` in the output directory. That file is
-what `factory.py ui` reads, which means the UI is never a second
+what `shuddhi ui` reads, which means the UI is never a second
 implementation of progress: it is a view over the log the run already wrote.
 
 Honouring the environment: NO_COLOR and TERM=dumb disable colour, a
