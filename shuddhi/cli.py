@@ -265,10 +265,16 @@ def cmd_doctor(args) -> int:
     in_venv = sys.prefix != getattr(sys, "base_prefix", sys.prefix)
     venv = os.environ.get("VIRTUAL_ENV")
     conda = os.environ.get("CONDA_DEFAULT_ENV")
-    if conda:
-        where = f"conda env: {conda}"
-    elif venv:
+    conda_prefix = os.environ.get("CONDA_PREFIX")
+    rp = os.path.realpath
+    # Describe the interpreter that is RUNNING, not whatever the shell has
+    # activated. With conda's base env and a .venv both active, the shell's
+    # variables say "conda" while the interpreter is the venv's -- and the
+    # interpreter is the fact that matters.
+    if venv and rp(sys.prefix) == rp(venv):
         where = f"venv: {venv}"
+    elif conda and conda_prefix and rp(sys.prefix) == rp(conda_prefix):
+        where = f"conda env: {conda}"
     elif in_venv:
         where = f"virtual environment at {sys.prefix} (not activated in this shell, which is fine)"
     else:
