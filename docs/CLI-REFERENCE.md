@@ -130,7 +130,7 @@ at. Zero dependencies.
 
 Runs the whole pipeline in the correct order with one command: language
 models, measurement, corpus manifest, near-duplicate clustering, filtering,
-report and receipt. See the [Quickstart](QUICKSTART.md#run-it--one-command).
+report and receipt. See the [Quickstart](QUICKSTART.md#build-it--one-command).
 
 | flag | default | meaning |
 |---|---|---|
