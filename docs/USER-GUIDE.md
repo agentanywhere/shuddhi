@@ -82,6 +82,15 @@ processes on a laptop.
 
 ## 3. The registry and the provenance gate
 
+The fastest way to a valid registry is to copy the one that ships with the
+repository and edit it:
+
+```bash
+cp examples/registry.json my-registry.json
+```
+
+It looks like this:
+
 ```json
 {
   "registry_version": 1,
@@ -100,7 +109,10 @@ processes on a laptop.
 }
 ```
 
-Every field is mandatory. `shard_id` must be unique.
+Every field is mandatory and `shard_id` must be unique. **A shard's `path`
+is resolved from the directory you run Shuddhi in**, not from the
+registry's own location — so keep the registry at the root of your project
+and write paths relative to that.
 
 ### data_class
 
