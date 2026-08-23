@@ -6,8 +6,16 @@ report must NEVER do — claim compliance, invent a fact, or quietly omit a
 field it could not derive — rather than towards formatting.
 """
 
+from pathlib import Path
+
 import eu_ai_act
 import registry as registry_mod
+
+# Resolve repo files from this file's location, never from the working
+# directory. The container runs `pytest /app/tests` with WORKDIR=/work (the
+# mount point for user data), so a relative "examples/registry.json" resolves
+# against /work and does not exist -- green everywhere else, red in the image.
+EXAMPLE_REGISTRY = Path(__file__).resolve().parent.parent / "examples" / "registry.json"
 
 
 class FakeShard:
@@ -152,7 +160,7 @@ def test_empty_corpus_does_not_crash():
 def test_runs_against_the_shipped_example_registry():
     """The example corpus deliberately contains a refused customer shard, so
     the demo output shows the refusal inside the compliance artefact."""
-    meta, accepted, refused = registry_mod.load_registry("examples/registry.json")
+    meta, accepted, refused = registry_mod.load_registry(str(EXAMPLE_REGISTRY))
     out = eu_ai_act.build_summary(meta, accepted, refused, None)
     assert len(refused) >= 1
     assert "Data excluded at admission" in out
