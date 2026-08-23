@@ -28,9 +28,13 @@ Apache-2.0. CPU-only. No network calls, no telemetry, no account.
 ## Try it in one minute
 
 ```bash
-docker build -t shuddhi .
-docker run --rm shuddhi demo
+docker run --rm ghcr.io/agentanywhere/shuddhi:latest demo
 ```
+
+Nothing to build and nothing to install — the image is published and
+multi-architecture (x86-64 and arm64, so Apple Silicon runs native). Pin a
+version in anything reproducible: `:1.2.0` rather than `:latest`. Prefer to
+build it yourself? `docker build -t shuddhi . && docker run --rm shuddhi demo`.
 
 That runs the complete pipeline over a bundled sample corpus with
 deliberately planted defects, so every filter visibly catches something:

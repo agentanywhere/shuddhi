@@ -27,9 +27,11 @@ run time — the pipeline makes no outbound calls.
 ## The three verbs
 
 ```bash
-docker run --rm shuddhi doctor    # what this environment can do
-docker run --rm shuddhi test      # the full test suite
-docker run --rm shuddhi demo      # end-to-end run on the sample corpus
+IMAGE=ghcr.io/agentanywhere/shuddhi:1.2.0
+
+docker run --rm $IMAGE doctor    # what this environment can do
+docker run --rm $IMAGE test      # the full test suite
+docker run --rm $IMAGE demo      # end-to-end run on the sample corpus
 ```
 
 Anything else is passed straight to the CLI:
