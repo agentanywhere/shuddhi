@@ -27,6 +27,26 @@ install command for *that* interpreter.
 
 ---
 
+## `init --corpus <dir> [--out registry.json]`
+
+Scaffolds a registry from a directory of `.txt` shards: one entry per file,
+`shard_id` from the filename, and a language guessed from a suffix like
+`news_eng.txt`.
+
+| flag | default | meaning |
+|---|---|---|
+| `--corpus` | required | directory holding your text shards |
+| `--out` | `registry.json` | where to write |
+| `--corpus-id` | folder name | the corpus's name |
+| `--language` | guessed | ISO 639-3 code applied to every shard |
+| `--force` | off | overwrite an existing file |
+
+Provenance fields are written **empty on purpose**. An empty field is
+refused by `check`, which names it — so the scaffold cannot become a corpus
+until a human says where the data came from.
+
+---
+
 ## `check --registry <file>`
 
 Validates the registry, prints the provenance ledger plus every refusal
