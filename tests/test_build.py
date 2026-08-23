@@ -426,3 +426,41 @@ def test_thin_lm_advice_is_followable(tmp_path, capsys):
     assert "Re-run with --sample-every 1" not in err, \
         "told the user to do what they had already done"
     assert "--no-perplexity" in err
+
+
+def test_log_drops_reconciles_with_the_manifest(tmp_path):
+    """--log-drops must record every dropped document, with a reason that sums
+    back to dropped_by_reason exactly. Recorded at the decision point, so it
+    is authoritative and cannot drift from the filter order."""
+    import collections
+    import json
+
+    reg_path, _ = make_corpus(tmp_path)
+    run_dir = measure(tmp_path, reg_path)
+    build = tmp_path / "b"
+    assert factory.main([
+        "build", "--registry", reg_path, "--run-dir", run_dir,
+        "--build-out", str(build), "--emit", "text", "--log-drops",
+    ]) == 0
+    drops_path = build / "dropped.jsonl"
+    assert drops_path.exists()
+    lines = [json.loads(x) for x in drops_path.read_text().splitlines()]
+    by_reason = collections.Counter(d["reason"] for d in lines)
+    manifest = json.loads((build / "BUILD-MANIFEST.json").read_text())
+    expected = {k: v for k, v in manifest["dropped_by_reason"].items() if v}
+    assert dict(by_reason) == expected
+    # every line carries the fields a human reviewer needs
+    for d in lines:
+        assert d["shard"] and d["reason"] and "preview" in d and d["chars"] >= 0
+
+
+def test_no_drops_file_without_the_flag(tmp_path):
+    """The drops file can contain PII, so it is written only on request."""
+    reg_path, _ = make_corpus(tmp_path)
+    run_dir = measure(tmp_path, reg_path)
+    build = tmp_path / "b"
+    assert factory.main([
+        "build", "--registry", reg_path, "--run-dir", run_dir,
+        "--build-out", str(build), "--emit", "text",
+    ]) == 0
+    assert not (build / "dropped.jsonl").exists()
