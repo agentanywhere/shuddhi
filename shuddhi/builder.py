@@ -137,10 +137,29 @@ def build_shard(
     neardup_drop: np.ndarray | None = None,
     tox_lexicon=None,
     plugins: list | None = None,
+    drops_fh=None,
 ) -> dict:
-    """Filter one shard. Returns counts + emitted-file receipt."""
+    """Filter one shard. Returns counts + emitted-file receipt.
+
+    If ``drops_fh`` is an open text file, one JSON line is written for every
+    document dropped, at the moment the decision is made — so the record is
+    authoritative (the reason is the branch actually taken, not a later
+    reconstruction) and cannot drift from the filter order. The line carries a
+    bounded text preview; a dropped document's preview can contain the very
+    content that got it dropped (PII, toxicity), so the drops file is as
+    sensitive as the corpus and is written only when explicitly requested."""
     plugins = plugins or []
     counts = {r: 0 for r in DROP_REASONS}
+
+    def record(reason: str, raw: bytes, i: int):
+        if drops_fh is None:
+            return
+        text = raw.decode("utf-8", "replace")
+        drops_fh.write(json.dumps({
+            "shard": shard.shard_id, "language": shard.language,
+            "doc_index": i, "reason": reason,
+            "chars": len(text), "preview": text[:280],
+        }, ensure_ascii=False) + "\n")
     counts.update({f"plugin:{p.name}": 0 for p in plugins})
     kept = 0
     kept_hashes = array("Q")
@@ -163,33 +182,40 @@ def build_shard(
                 )
             if claim is False:
                 counts["exact_dup"] += 1
+                record("exact_dup", doc, _idx)
                 continue
             if neardup_drop is not None and neardup_drop.size:
                 j = int(np.searchsorted(neardup_drop, np.uint64(h)))
                 if j < neardup_drop.size and int(neardup_drop[j]) == h:
                     counts["near_dup"] += 1
+                    record("near_dup", doc, _idx)
                     continue
 
             text = doc.decode("utf-8", "replace")
             if quality_mod.score_doc(text)["score"] < cfg.min_quality:
                 counts["quality"] += 1
+                record("quality", doc, _idx)
                 continue
             if lm is not None and max_bits is not None:
                 bits = lm.bits_per_char(text)
                 if bits is not None and bits > max_bits:
                     counts["perplexity"] += 1
+                    record("perplexity", doc, _idx)
                     continue
             if tox_lexicon is not None and tox_lexicon.score(text)["flagged"]:
                 counts["toxicity"] += 1
+                record("toxicity", doc, _idx)
                 continue
             if cfg.drop_contaminated and eval_index is not None and eval_index.check_doc(text):
                 counts["contamination"] += 1
+                record("contamination", doc, _idx)
                 continue
 
             dropped_by_plugin = False
             for plug in plugins:
                 if plug.check(text) is not None:
                     counts[f"plugin:{plug.name}"] += 1
+                    record(f"plugin:{plug.name}", doc, _idx)
                     dropped_by_plugin = True
                     break
             if dropped_by_plugin:
@@ -198,6 +224,7 @@ def build_shard(
             pii_counts = pii_mod.scan(text)
             if pii_counts and cfg.pii_policy == "drop":
                 counts["pii"] += 1
+                record("pii", doc, _idx)
                 continue
 
             kept += 1

@@ -175,6 +175,15 @@ corpus at all. Either fix the registry, or state the intent explicitly with
 refusals in the manifest. The bundled `examples/registry.json` ships a
 `customer`-class shard deliberately, so it triggers this on the first try.
 
+Add `--log-drops` to any build or pipeline and it also writes
+`build/dropped.jsonl`: one JSON line per dropped document — its shard,
+index, the reason it was removed, and a short preview. It is written at the
+moment the decision is made, so the reason is the branch actually taken, not
+a later guess, and the counts sum back to `dropped_by_reason` exactly. Use it
+to answer "what did you exclude and why?" and to audit the tool's judgement on
+your own data. The previews can contain the content that triggered the drop
+(PII, toxicity), so the file is as sensitive as the corpus.
+
 `pipeline` runs every stage below in the correct order and writes the
 manifests, the cleaned corpus, a regulatory draft and an HTML receipt. The
 ordering is not cosmetic: the language models must be trained *before* the

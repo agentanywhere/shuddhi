@@ -235,6 +235,22 @@ shuddhi-out/build/*.filtered.txt      the cleaned corpus
 shuddhi-out/REPORT.md                 EU AI Act Article 53(1)(d) draft
 ```
 
+### See exactly what was removed
+
+The manifest says *how many* documents each filter dropped. To see *which*,
+add `--log-drops`:
+
+```bash
+shuddhi pipeline --registry my-registry.json --out shuddhi-out/ --log-drops
+```
+
+That writes `shuddhi-out/build/dropped.jsonl` — one line per dropped document,
+with the reason it was dropped and a text preview. It is the answer to an
+auditor's "what did you exclude, and why?", and the fastest way to check the
+tool's judgement: read the `perplexity` lines and decide for yourself whether
+they are junk. (The file can contain the very content that got a document
+dropped, so treat it as sensitively as the corpus itself.)
+
 **Record `filtered_build_hash` wherever you track training runs.** That one
 string identifies exactly which documents your model saw, and anyone holding
 the same source files can recompute it and check you.
