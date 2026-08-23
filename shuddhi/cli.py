@@ -323,8 +323,23 @@ def cmd_init(args) -> int:
     """
     corpus = args.corpus
     if not os.path.isdir(corpus):
-        raise UserError(f"not a directory: {corpus}",
-                        "Point --corpus at the folder holding your .txt shards.")
+        # Be useful rather than merely correct: look around and name a
+        # directory that would actually work.
+        here = [fn for fn in sorted(os.listdir("."))
+                if fn.lower().endswith(".txt") and os.path.isfile(fn)]
+        nearby = [d for d in sorted(os.listdir("."))
+                  if os.path.isdir(d) and not d.startswith(".")
+                  and any(f.lower().endswith(".txt") for f in os.listdir(d))]
+        hint = "Point --corpus at the folder holding your .txt files."
+        if here:
+            hint += f"\n\nThere are {len(here)} .txt file(s) in this directory:\n    shuddhi init --corpus . --out {args.out}"
+        if nearby:
+            hint += ("\n\nThese folders contain .txt files:\n" +
+                     "\n".join(f"    shuddhi init --corpus {d} --out {args.out}" for d in nearby[:4]))
+        if not here and not nearby:
+            hint += ("\n\nNo .txt files found nearby. To try the pipeline on the "
+                     "bundled sample corpus instead:\n    shuddhi init --corpus examples/corpus --out my-registry.json")
+        raise UserError(f"no such directory: {corpus}", hint)
 
     files = sorted(
         fn for fn in os.listdir(corpus)
