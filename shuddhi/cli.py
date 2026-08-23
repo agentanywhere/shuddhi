@@ -49,6 +49,7 @@ from . import domain as domain_mod
 from . import quality as quality_mod
 from . import registry as registry_mod
 from . import shards as shards_mod
+from .errors import UserError
 from .lid import make_lid
 from .progress import Reporter, human
 
@@ -180,6 +181,70 @@ def cmd_plugins(args) -> int:
     return 0
 
 
+def _explain(exc: BaseException) -> tuple[str, str] | None:
+    """Translate an expected failure into a message and a next step.
+
+    Returns None for anything unrecognised — those keep their traceback,
+    because an unexpected exception IS a bug and hiding it would waste the
+    one report we get about it.
+    """
+    if isinstance(exc, UserError):
+        return str(exc), exc.hint
+
+    if isinstance(exc, FileNotFoundError):
+        missing = exc.filename or "a file Shuddhi needed"
+        name = os.path.basename(str(missing))
+        if name.endswith(".json") and "registry" in name.lower():
+            return (f"registry file not found: {missing}",
+                    "Copy the example and edit the paths:\n"
+                    "    cp examples/registry.json my-registry.json\n"
+                    "Every shard needs source, license, date_acquired, "
+                    "data_class and language.")
+        if name.endswith(".lm.gz"):
+            return (f"language model not found: {missing}",
+                    "Train it first:\n"
+                    "    shuddhi train-lm --registry <registry> --shard <shard> --lm-dir lms/\n"
+                    "Or drop the perplexity filter with --no-perplexity.")
+        if name in ("MANIFEST.json", "BUILD-MANIFEST.json"):
+            return (f"{name} not found: {missing}",
+                    "A build reads a MEASURED run. Run these first:\n"
+                    "    shuddhi run   --registry <registry> --shard <shard> --out run/\n"
+                    "    shuddhi merge --registry <registry> --out run/")
+        return (f"file not found: {missing}",
+                "Check the path. Paths in a registry are resolved from the "
+                "directory you run Shuddhi in, not from the registry's own "
+                "location.")
+
+    if isinstance(exc, IsADirectoryError):
+        return (f"expected a file but found a directory: {exc.filename}", "")
+
+    if isinstance(exc, PermissionError):
+        return (f"permission denied: {exc.filename}",
+                "Check the file's permissions. In Docker, a mounted volume "
+                "keeps its host ownership — try --user \"$(id -u):$(id -g)\".")
+
+    if isinstance(exc, json.JSONDecodeError):
+        return (f"could not parse JSON: {exc.msg} (line {exc.lineno}, column {exc.colno})",
+                "A trailing comma or a missing quote is the usual cause. "
+                "Most editors will point at it.")
+
+    if isinstance(exc, UnicodeDecodeError):
+        return ("a file is not valid UTF-8",
+                "Shuddhi reads UTF-8 text. Convert the file first, e.g. "
+                "iconv -f latin1 -t utf-8 in.txt > out.txt")
+
+    if isinstance(exc, MemoryError):
+        return ("ran out of memory",
+                "Memory scales with the number of documents, not their size. "
+                "Process fewer shards at once, or raise the limit "
+                "(Docker Desktop caps container memory by default).")
+
+    if isinstance(exc, OSError) and getattr(exc, "errno", None) == 28:
+        return ("the disk is full", "Free space or choose another --out directory.")
+
+    return None
+
+
 def cmd_doctor(args) -> int:
     """Report whether this interpreter can run the pipeline, and what is
     missing. Exists because the most common failure by far is running
@@ -250,12 +315,36 @@ def cmd_check(args) -> int:
     meta, accepted, refused = registry_mod.load_registry(args.registry)
     print(f"registry: {meta['corpus_id']}  sha256={meta['registry_sha256'][:16]}…")
     print(f"accepted: {len(accepted)}")
+
+    # Does each accepted shard actually exist, and is it non-empty? This is
+    # a stat, not a read: refused shards are still never opened, and the
+    # gate's guarantee holds. Checking here rather than at `run` means a
+    # typo surfaces where the user is already looking.
+    missing, empty = [], []
     for s in accepted:
+        if not os.path.exists(s.path):
+            missing.append(s)
+        elif os.path.isfile(s.path) and os.path.getsize(s.path) == 0:
+            empty.append(s)
         print(f"  ✓ {s.shard_id:<16} {s.data_class:<9} {s.license:<12} {s.source}")
+
     print(f"refused: {len(refused)}")
     for r in refused:
         print(f"  ✗ {r.shard_id}: {r.reason}")
-    return 2 if refused else 0
+
+    if missing:
+        print(f"\nunreadable: {len(missing)}", file=sys.stderr)
+        for s in missing:
+            print(f"  ! {s.shard_id}: no such file: {s.path}", file=sys.stderr)
+        print("\nPaths are resolved from the directory you run Shuddhi in, "
+              "not from the registry's own location.", file=sys.stderr)
+    for s in empty:
+        print(f"  ! {s.shard_id}: file is empty: {s.path}", file=sys.stderr)
+
+    if refused or missing or empty:
+        return 2
+    print("\nEvery shard is admissible and readable.")
+    return 0
 
 
 def cmd_run(args) -> int:
@@ -1399,7 +1488,29 @@ def main(argv=None) -> int:
     p.set_defaults(fn=cmd_merge)
 
     args = ap.parse_args(argv)
-    return args.fn(args)
+
+    # A stack trace is the right answer for a bug and the wrong answer for a
+    # typo. Expected failures get a sentence and a next step; anything we do
+    # not recognise keeps its traceback, because that is a bug report.
+    try:
+        return args.fn(args)
+    except KeyboardInterrupt:
+        print("\ninterrupted", file=sys.stderr)
+        return 130
+    except BrokenPipeError:
+        return 0  # `shuddhi ... | head` is not an error
+    except BaseException as exc:  # noqa: BLE001 — re-raised unless recognised
+        explained = _explain(exc)
+        if explained is None or os.environ.get("SHUDDHI_TRACEBACK"):
+            if explained is not None:
+                print(f"error: {explained[0]}\n", file=sys.stderr)
+            raise
+        message, hint = explained
+        print(f"error: {message}", file=sys.stderr)
+        if hint:
+            print(f"\n{hint}", file=sys.stderr)
+        print("\n(SHUDDHI_TRACEBACK=1 for the full traceback)", file=sys.stderr)
+        return 2
 
 
 if __name__ == "__main__":

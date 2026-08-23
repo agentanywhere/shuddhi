@@ -5,6 +5,24 @@ problems, and it names them in one line.
 
 ---
 
+### Shuddhi printed an error instead of a traceback
+
+That is deliberate. Anything caused by input or environment — a missing
+file, malformed JSON, a path typo, a full disk — gets one sentence and a
+next step, and exits 2. A traceback would tell you nothing you can act on.
+
+If you want the traceback anyway (or you think you have found a bug):
+
+```bash
+SHUDDHI_TRACEBACK=1 shuddhi check --registry my-registry.json
+```
+
+An *unrecognised* exception always keeps its traceback, because that is a
+bug and hiding it would waste the report. If you see one, it is worth an
+issue — include the `doctor` output.
+
+---
+
 ### `ModuleNotFoundError: No module named 'numpy'`
 
 You are running a different Python than the one you installed into. This is
