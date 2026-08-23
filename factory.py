@@ -810,6 +810,236 @@ def cmd_build_union(args) -> int:
     return 0
 
 
+def _write_html_report(out_dir: str, run_dir: str, build_dir: str) -> str | None:
+    """Write a single self-contained HTML receipt.
+
+    Deliberately not a web application: no server, no build step, no
+    JavaScript, no external requests. One file you can open offline, email to
+    an auditor, or attach to a compliance pack — which is what people actually
+    do with a receipt. Anything that needs accounts, history across builds and
+    access control is a different product.
+    """
+    mpath = os.path.join(run_dir, "MANIFEST.json")
+    bpath = os.path.join(build_dir, "BUILD-MANIFEST.json")
+    if not os.path.exists(mpath):
+        return None
+    with open(mpath, encoding="utf-8") as f:
+        m = json.load(f)
+    b = None
+    if os.path.exists(bpath):
+        with open(bpath, encoding="utf-8") as f:
+            b = json.load(f)
+
+    def esc(x) -> str:
+        return (str(x).replace("&", "&amp;").replace("<", "&lt;")
+                .replace(">", "&gt;").replace('"', "&quot;"))
+
+    fp = m["full_pass"]
+    rows = "".join(
+        f"<tr><td>{esc(sh['shard_id'])}</td><td>{esc(sh['language'])}</td>"
+        f"<td class=n>{sh['docs']:,}</td><td class=n>{sh['file_bytes']/1e6:,.1f} MB</td>"
+        f"<td class=n>{sh['exact_dup_rate']:.2%}</td>"
+        f"<td class=sha>{esc((sh.get('file_sha256') or '')[:16])}…</td></tr>"
+        for sh in m["shards"])
+
+    refused = m["provenance_gate"]["refused"]
+    refused_html = ("<p class=ok>No shard was refused.</p>" if not refused else
+        "<ul class=refused>" + "".join(
+            f"<li><b>{esc(r['shard_id'])}</b> — {esc(r['reason'])}</li>" for r in refused)
+        + "</ul>")
+
+    build_html = "<p class=muted>No filtered build in this run.</p>"
+    if b:
+        drops = "".join(
+            f"<tr><td>{esc(k.replace('_', ' '))}</td><td class=n>{v:,}</td></tr>"
+            for k, v in b["dropped_by_reason"].items() if v)
+        warn = "".join(f"<div class=warn>{esc(w)}</div>" for w in b.get("warnings", []))
+        total = b["kept_docs"] + sum(b["dropped_by_reason"].values())
+        pct = (b["kept_docs"] / total * 100) if total else 0
+        build_html = f"""{warn}
+        <div class=big><span>{b['kept_docs']:,}</span> documents kept
+          <small>of {total:,} — {pct:.2f}%</small></div>
+        <table><thead><tr><th>dropped by</th><th>documents</th></tr></thead>
+        <tbody>{drops or '<tr><td colspan=2>nothing dropped</td></tr>'}</tbody></table>
+        <p>PII spans redacted: <b>{b.get('pii_redactions', 0):,}</b></p>
+        <h3>Filter configuration</h3>
+        <pre>{esc(json.dumps(b['filter_config'], indent=2))}</pre>"""
+
+    receipts = [("corpus build hash", m["corpus_build_hash"])]
+    if b:
+        receipts += [("filter config sha", b["filter_config_sha256"]),
+                     ("filtered build hash", b["filtered_build_hash"])]
+    receipt_html = "".join(
+        f"<div class=receipt><span class=label>{esc(k)}</span>"
+        f"<code>{esc(v)}</code></div>" for k, v in receipts)
+
+    doc = f"""<!doctype html>
+<html lang=en><meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Corpus receipt — {esc(m['corpus_id'])}</title>
+<style>
+ :root{{--fg:#0f172a;--muted:#64748b;--line:#e2e8f0;--accent:#1d4ed8;--warn:#b45309;--warnbg:#fffbeb;--ok:#047857}}
+ @media(prefers-color-scheme:dark){{:root{{--fg:#e2e8f0;--muted:#94a3b8;--line:#1e293b;--accent:#60a5fa;--warnbg:#2a2113}}body{{background:#0b1220}}}}
+ *{{box-sizing:border-box}}
+ body{{font:16px/1.6 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--fg);max-width:62rem;margin:0 auto;padding:2.5rem 1.25rem}}
+ h1{{font-size:1.6rem;margin:0 0 .25rem}} h2{{font-size:1.15rem;margin:2.5rem 0 .75rem;padding-bottom:.4rem;border-bottom:1px solid var(--line)}}
+ h3{{font-size:1rem;margin:1.5rem 0 .5rem}}
+ .sub{{color:var(--muted);margin:0 0 2rem}}
+ .receipt{{display:flex;flex-wrap:wrap;gap:.5rem;align-items:baseline;padding:.6rem .8rem;border:1px solid var(--line);border-radius:.5rem;margin-bottom:.5rem}}
+ .receipt .label{{color:var(--muted);font-size:.8rem;text-transform:uppercase;letter-spacing:.06em;min-width:11rem}}
+ code{{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.82rem;word-break:break-all}}
+ table{{border-collapse:collapse;width:100%;font-size:.9rem}}
+ th,td{{text-align:left;padding:.45rem .6rem;border-bottom:1px solid var(--line)}}
+ th{{color:var(--muted);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.05em}}
+ td.n{{text-align:right;font-variant-numeric:tabular-nums}} td.sha{{font-family:ui-monospace,monospace;font-size:.78rem;color:var(--muted)}}
+ .big{{font-size:1.05rem;margin:1rem 0}} .big span{{font-size:2rem;font-weight:650;color:var(--accent)}} .big small{{color:var(--muted)}}
+ .warn{{background:var(--warnbg);border-left:3px solid var(--warn);padding:.7rem .9rem;margin:.75rem 0;border-radius:.25rem}}
+ .ok{{color:var(--ok)}} .muted{{color:var(--muted)}}
+ ul.refused li{{margin-bottom:.4rem}}
+ pre{{background:rgba(127,127,127,.09);padding:.9rem;border-radius:.5rem;overflow-x:auto;font-size:.8rem}}
+ footer{{margin-top:3rem;padding-top:1rem;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}}
+</style>
+<h1>Corpus receipt — {esc(m['corpus_id'])}</h1>
+<p class=sub>Generated {esc(m['generated_utc'])} by Shuddhi {esc(m['env'].get('factory_version',''))}.
+Recompute these hashes from the same source files and they will match.</p>
+
+<h2>Receipts</h2>
+{receipt_html}
+
+<h2>Provenance gate</h2>
+{refused_html}
+
+<h2>Corpus, measured over every document</h2>
+<div class=big><span>{fp['total_docs']:,}</span> documents
+  <small>{fp['unique_docs']:,} unique · {fp['global_exact_dup_rate']:.2%} exact duplicates ·
+  {fp['total_doc_bytes']/1e9:,.2f} GB</small></div>
+<table><thead><tr><th>shard</th><th>lang</th><th>documents</th><th>size</th><th>dup rate</th><th>sha-256</th></tr></thead>
+<tbody>{rows}</tbody></table>
+
+<h2>Filtered build</h2>
+{build_html}
+
+<footer>Shuddhi — open source (Apache-2.0) · github.com/agentanywhere/shuddhi<br>
+Numbers measured over every document unless a section says otherwise.</footer>
+</html>"""
+    path = os.path.join(out_dir, "report.html")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(doc)
+    return path
+
+
+def cmd_pipeline(args) -> int:
+    """Run the whole thing on a registry, in the right order, with one command.
+
+    The staged commands exist because at corpus scale you want to parallelise
+    shards, resume after a failure, and inspect between phases. None of that
+    matters the first time you try the tool, and the ordering is genuinely
+    easy to get wrong — the language models must be trained BEFORE the
+    measurement pass, or the perplexity filter silently has no distribution
+    to threshold against. This command encodes the correct order so nobody
+    has to learn it from a footnote.
+    """
+    from types import SimpleNamespace
+
+    meta, accepted, refused = registry_mod.load_registry(args.registry)
+    if refused:
+        print(f"registry: {meta['corpus_id']}")
+        for r in refused:
+            print(f"  REFUSED {r.shard_id}: {r.reason}")
+        if not args.allow_refusals:
+            print("\nRefusals present. Fix the registry, or pass --allow-refusals "
+                  "to build from the accepted shards only.", file=sys.stderr)
+            return 2
+        print()
+    if not accepted:
+        print("no accepted shards in this registry", file=sys.stderr)
+        return 2
+
+    out = args.out
+    run_dir = os.path.join(out, "run")
+    lm_dir = os.path.join(out, "lms")
+    sig_dir = os.path.join(out, "sigs")
+    build_dir = os.path.join(out, "build")
+    drop_path = os.path.join(out, "neardup-drop.u64")
+    shard_ids = [sh.shard_id for sh in accepted]
+
+    def step(n, total, title):
+        print(f"\n[{n}/{total}] {title}", flush=True)
+
+    total_steps = 5 if args.no_perplexity else 6
+    n = 0
+
+    if not args.no_perplexity:
+        n += 1
+        step(n, total_steps, "training per-language models (before measuring, so the "
+                             "measurement records a perplexity distribution)")
+        for sh in accepted:
+            cmd_train_lm(SimpleNamespace(
+                registry=args.registry, shard=sh.shard_id, lm_dir=lm_dir,
+                sample_every=args.lm_sample_every, max_mb=20))
+
+    n += 1
+    step(n, total_steps, "measuring each shard")
+    for sh in accepted:
+        lm_path = os.path.join(lm_dir, f"{sh.language}.lm.gz")
+        cmd_run(SimpleNamespace(
+            registry=args.registry, shard=sh.shard_id, out=run_dir,
+            sample_every=args.sample_every, minhash_every=DEFAULT_MINHASH_EVERY,
+            token_every=DEFAULT_TOKEN_EVERY, token_byte_budget=DEFAULT_TOKEN_BYTE_BUDGET,
+            max_docs=args.max_docs, eval_set=args.eval_set,
+            fasttext_model=args.fasttext_model, tokenizer=args.tokenizer,
+            lm=(lm_path if (not args.no_perplexity and os.path.exists(lm_path)) else ""),
+            pii_scan=True))
+
+    n += 1
+    step(n, total_steps, "merging into a corpus manifest (this mints the corpus build hash)")
+    cmd_merge(SimpleNamespace(registry=args.registry, out=run_dir, partial=args.allow_refusals))
+
+    if not args.no_neardup:
+        n += 1
+        step(n, total_steps, "clustering near-duplicates across the corpus")
+        for sh in accepted:
+            cmd_neardup_sig(SimpleNamespace(
+                registry=args.registry, shard=sh.shard_id, sig_dir=sig_dir))
+        cmd_neardup_merge(SimpleNamespace(
+            registry=args.registry, run_dir=run_dir, sig_dir=sig_dir, out=drop_path))
+    else:
+        n += 1
+        step(n, total_steps, "near-duplicate clustering skipped (--no-neardup)")
+
+    n += 1
+    step(n, total_steps, "applying filters and writing the build")
+    rc = cmd_build(SimpleNamespace(
+        registry=args.registry, run_dir=run_dir, build_out=build_dir,
+        min_quality=args.min_quality,
+        lm_dir=("" if args.no_perplexity else lm_dir),
+        ppx_percentile=args.ppx_percentile,
+        neardup_drop=("" if args.no_neardup else drop_path),
+        toxicity=not args.no_toxicity, toxicity_lexicon_dir=args.toxicity_lexicon_dir,
+        eval_set=args.eval_set, pii=args.pii, shards="", emit=args.emit,
+        plugin=args.plugin))
+    if rc != 0:
+        return rc
+
+    n += 1
+    step(n, total_steps, "writing the report")
+    cmd_report(SimpleNamespace(
+        registry=args.registry, eu_ai_act=True,
+        manifest=os.path.join(build_dir, "BUILD-MANIFEST.json"),
+        out=os.path.join(out, "REPORT.md")))
+    _write_html_report(out, run_dir, build_dir)
+
+    print(f"""
+Done. Everything is under {out}/
+
+  {out}/build/BUILD-MANIFEST.json   the receipt to cite in your training ledger
+  {out}/build/*.filtered.txt        the cleaned corpus {'(use --emit text to write it)' if args.emit == 'none' else ''}
+  {out}/REPORT.md                   readable summary
+  {out}/report.html                 open this in a browser
+""")
+    return 0
+
+
 def cmd_merge(args) -> int:
     import numpy as np
 
@@ -997,6 +1227,36 @@ def main(argv=None) -> int:
 
     p = sub.add_parser("doctor", help="check this environment can run the pipeline")
     p.set_defaults(fn=cmd_doctor)
+
+    p = sub.add_parser(
+        "pipeline",
+        help="run the whole pipeline on a registry with one command (start here)")
+    p.add_argument("--registry", required=True)
+    p.add_argument("--out", default="shuddhi-out", help="output directory for everything")
+    p.add_argument("--emit", default="text", choices=("none", "text"),
+                   help="text (default) writes the cleaned corpus; none is manifest-only")
+    p.add_argument("--sample-every", type=int, default=DEFAULT_SAMPLE_EVERY)
+    p.add_argument("--lm-sample-every", type=int, default=1,
+                   help="stride for language-model training text (default 1: correct "
+                        "for small corpora; raise it for very large ones)")
+    p.add_argument("--min-quality", type=float, default=0.5)
+    p.add_argument("--ppx-percentile", type=int, default=99, choices=(50, 90, 99))
+    p.add_argument("--pii", default="redact", choices=("keep", "redact", "drop"))
+    p.add_argument("--eval-set", default="")
+    p.add_argument("--fasttext-model", default="")
+    p.add_argument("--tokenizer", default="")
+    p.add_argument("--toxicity-lexicon-dir", default="")
+    p.add_argument("--plugin", action="append", default=[], metavar="NAME")
+    p.add_argument("--no-perplexity", action="store_true",
+                   help="skip the language models and the perplexity filter")
+    p.add_argument("--no-neardup", action="store_true", help="skip near-duplicate clustering")
+    p.add_argument("--no-toxicity", action="store_true", help="skip the toxicity screen")
+    p.add_argument("--eu-ai-act", action="store_true",
+                   help="write the report on the EU AI Office template shape")
+    p.add_argument("--max-docs", type=int, default=0)
+    p.add_argument("--allow-refusals", action="store_true",
+                   help="proceed with the accepted shards when the registry has refusals")
+    p.set_defaults(fn=cmd_pipeline)
 
     p = sub.add_parser("check", help="validate a shard registry")
     p.add_argument("--registry", required=True)
