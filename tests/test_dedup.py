@@ -1,6 +1,6 @@
 import numpy as np
 
-import dedup
+from shuddhi import dedup
 
 BASE = (
     "the quick brown fox jumps over the lazy dog while the cat watches from the "

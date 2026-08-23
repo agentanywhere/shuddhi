@@ -1,7 +1,7 @@
 import json
 
-import factory
-from extract import strip_tags
+from shuddhi import cli as factory
+from shuddhi.extract import strip_tags
 
 HTML = """<html><head><title>Page</title>
 <script>var tracking = "evil";</script>

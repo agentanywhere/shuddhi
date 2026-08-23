@@ -43,16 +43,14 @@ import time
 from array import array
 from collections import Counter
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
-import contamination as contamination_mod
-import dedup
-import domain as domain_mod
-import quality as quality_mod
-import registry as registry_mod
-import shards as shards_mod
-from lid import make_lid
-from progress import Reporter, human
+from . import contamination as contamination_mod
+from . import dedup
+from . import domain as domain_mod
+from . import quality as quality_mod
+from . import registry as registry_mod
+from . import shards as shards_mod
+from .lid import make_lid
+from .progress import Reporter, human
 
 FACTORY_VERSION = "1.2.0"
 
@@ -99,15 +97,15 @@ def cmd_attest(args) -> int:
     --registry every provenance field reports UNKNOWN, because a blank field
     in a receipt reads as "nothing to declare".
     """
-    import attest as attest_mod
+    from . import attest as attest_mod
     meta = accepted = None
     if args.registry:
         meta, accepted, _refused = registry_mod.load_registry(args.registry)
 
     scan_fn = None
     if args.scan:
-        import pii as pii_mod
-        import toxicity as tox_mod
+        from . import pii as pii_mod
+        from . import toxicity as tox_mod
         lex = tox_mod.ToxicityLexicon.builtin()
 
         def scan_fn(doc: bytes) -> dict:
@@ -136,7 +134,7 @@ def cmd_report(args) -> int:
     are emitted as explicit GAPs. A regulatory filing is the wrong place for a
     confident approximation.
     """
-    import eu_ai_act
+    from . import eu_ai_act
     if not args.eu_ai_act:
         print("report: pass --eu-ai-act (the only template supported today)")
         return 2
@@ -155,13 +153,13 @@ def cmd_report(args) -> int:
 
 def cmd_ui(args) -> int:
     """Serve the local viewer over the builds in a directory."""
-    import ui as ui_mod
+    from . import ui as ui_mod
 
     return ui_mod.serve(args.dir, port=args.port, open_browser=not args.no_open)
 
 
 def cmd_plugins(args) -> int:
-    import plugins as plugins_mod
+    from . import plugins as plugins_mod
 
     found = plugins_mod.available()
     if not found:
@@ -273,12 +271,12 @@ def cmd_run(args) -> int:
             eval_sha = hashlib.sha256(f.read()).hexdigest()
     token_meter = None
     if args.tokenizer:
-        from tokens import TokenRatioMeter
+        from .tokens import TokenRatioMeter
 
         token_meter = TokenRatioMeter(args.tokenizer, args.token_byte_budget)
     lm = None
     if args.lm:
-        from ngram_lm import CharTrigramLM
+        from .ngram_lm import CharTrigramLM
 
         lm = CharTrigramLM.load(args.lm)
 
@@ -352,7 +350,7 @@ def cmd_run(args) -> int:
                     ppx_bits.append(bits)
 
             if args.pii_scan:
-                import pii as pii_mod
+                from . import pii as pii_mod
 
                 counts = pii_mod.scan(text)
                 if counts:
@@ -480,7 +478,7 @@ def _ppx_summary(bits: array, lm_path: str) -> dict:
 
 
 def cmd_train_lm(args) -> int:
-    from ngram_lm import CharTrigramLM
+    from .ngram_lm import CharTrigramLM
 
     meta, shard = _load_shard(args.registry, args.shard)
     os.makedirs(args.lm_dir, exist_ok=True)
@@ -513,7 +511,7 @@ def cmd_train_lm(args) -> int:
 
 
 def cmd_neardup_sig(args) -> int:
-    from neardup import write_shard_sigs
+    from .neardup import write_shard_sigs
 
     meta, shard = _load_shard(args.registry, args.shard)
     os.makedirs(args.sig_dir, exist_ok=True)
@@ -526,7 +524,7 @@ def cmd_neardup_sig(args) -> int:
 
 
 def cmd_neardup_merge(args) -> int:
-    from neardup import merge_and_cluster
+    from .neardup import merge_and_cluster
 
     meta, accepted, _refused = registry_mod.load_registry(args.registry)
     shard_ids = [s.shard_id for s in accepted]
@@ -541,7 +539,7 @@ def cmd_neardup_merge(args) -> int:
 
 
 def cmd_extract(args) -> int:
-    from extract import extract_dir
+    from .extract import extract_dir
 
     stats = extract_dir(args.in_dir, args.out, min_chars=args.min_chars)
     print(json.dumps(stats, indent=1))
@@ -551,7 +549,7 @@ def cmd_extract(args) -> int:
 def cmd_build(args) -> int:
     import numpy as np
 
-    from builder import (DROP_REASONS, FilterConfig, HashSetIndex, build_shard,
+    from .builder import (DROP_REASONS, FilterConfig, HashSetIndex, build_shard,
                          filtered_build_hash)
 
     meta, accepted, refused = registry_mod.load_registry(args.registry)
@@ -575,7 +573,7 @@ def cmd_build(args) -> int:
     max_bits: dict[str, float] = {}
     lms: dict[str, object] = {}
     if args.lm_dir:
-        from ngram_lm import CharTrigramLM
+        from .ngram_lm import CharTrigramLM
 
         build_langs = {s.language for s in build_shards}
         for s in accepted:
@@ -594,13 +592,13 @@ def cmd_build(args) -> int:
     neardup_drop = None
     neardup_sha = ""
     if args.neardup_drop:
-        from neardup import droplist_sha256, load_droplist
+        from .neardup import droplist_sha256, load_droplist
 
         neardup_drop = load_droplist(args.neardup_drop)
         neardup_sha = droplist_sha256(args.neardup_drop)
     plugin_objs = []
     if args.plugin:
-        import plugins as plugins_mod
+        from . import plugins as plugins_mod
 
         plugin_objs = plugins_mod.load(args.plugin)
         for po in plugin_objs:
@@ -608,7 +606,7 @@ def cmd_build(args) -> int:
 
     tox_lexicon = None
     if args.toxicity:
-        from toxicity import ToxicityLexicon
+        from .toxicity import ToxicityLexicon
 
         tox_lexicon = (ToxicityLexicon.from_dir(args.toxicity_lexicon_dir)
                        if args.toxicity_lexicon_dir else ToxicityLexicon.builtin())
@@ -627,7 +625,7 @@ def cmd_build(args) -> int:
         drop_contaminated=bool(args.eval_set),
         neardup_droplist_sha256=neardup_sha,
         toxicity_lexicon_sha256=tox_lexicon.sha256 if tox_lexicon else "",
-        plugin_identities=(__import__("plugins").identities(plugin_objs)
+        plugin_identities=(__import__("shuddhi.plugins", fromlist=["identities"]).identities(plugin_objs)
                            if plugin_objs else []),
     )
     eval_index = None
@@ -733,7 +731,7 @@ def cmd_build_union(args) -> int:
     """
     import numpy as np
 
-    from builder import DROP_REASONS, filtered_build_hash
+    from .builder import DROP_REASONS, filtered_build_hash
 
     parts = []
     for d in args.build_outs.split(","):
@@ -768,7 +766,7 @@ def cmd_build_union(args) -> int:
                       file=sys.stderr)
                 return 2
             merged_bits[lang] = cutoff
-    from builder import FilterConfig
+    from .builder import FilterConfig
 
     union_cfg = FilterConfig(
         min_quality=base["filter_config"]["min_quality"],
@@ -1247,7 +1245,7 @@ def _write_composition_md(out_dir: str, manifest: dict, shard_stats: dict, proce
 
 
 def main(argv=None) -> int:
-    ap = argparse.ArgumentParser(prog="factory", description=__doc__)
+    ap = argparse.ArgumentParser(prog="shuddhi", description=__doc__)
     sub = ap.add_subparsers(dest="cmd", required=True)
 
     p = sub.add_parser("doctor", help="check this environment can run the pipeline")

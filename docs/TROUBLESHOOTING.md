@@ -1,6 +1,6 @@
 # Troubleshooting
 
-**Run `python3 factory.py doctor` first.** Most problems are environment
+**Run `shuddhi doctor` first.** Most problems are environment
 problems, and it names them in one line.
 
 ---
@@ -13,7 +13,7 @@ binaries.
 
 ```bash
 which -a python3          # how many do you have?
-python3 factory.py doctor # doctor prints sys.executable
+shuddhi doctor # doctor prints sys.executable
 ```
 
 Fix by installing into *that* interpreter, or activate the environment:
@@ -59,10 +59,10 @@ Almost always the ordering. `build` reads the cutoff from the *measurement*,
 so the models must exist before you measure:
 
 ```bash
-factory.py train-lm --registry R --shard S --lm-dir lms/    # 1
-factory.py run --registry R --shard S --out run/ --lm lms/<lang>.lm.gz   # 2
-factory.py merge --registry R --out run/                    # 3
-factory.py build --registry R --run-dir run/ --lm-dir lms/ ...  # 4
+shuddhi train-lm --registry R --shard S --lm-dir lms/    # 1
+shuddhi run --registry R --shard S --out run/ --lm lms/<lang>.lm.gz   # 2
+shuddhi merge --registry R --out run/                    # 3
+shuddhi build --registry R --run-dir run/ --lm-dir lms/ ...  # 4
 ```
 
 `build` warns on stderr when `--lm-dir` is given but the run has no
@@ -126,7 +126,7 @@ from a few documents does not describe the language — so any percentile
 cutoff taken from it is arbitrary.
 
 ```bash
-python3 factory.py train-lm --registry R --shard S --lm-dir lms/ --sample-every 1
+shuddhi train-lm --registry R --shard S --lm-dir lms/ --sample-every 1
 ```
 
 Below a few thousand documents, consider skipping the perplexity filter
@@ -152,7 +152,7 @@ model:
 
 ```bash
 make fetch-lid
-factory.py run ... --fasttext-model lid.176.ftz
+shuddhi run ... --fasttext-model lid.176.ftz
 ```
 
 `"method": "script"` in the stats confirms which path ran.

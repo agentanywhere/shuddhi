@@ -4,9 +4,9 @@ import json
 
 import numpy as np
 
-import factory
-from neardup import load_droplist
-from shards import doc_hash64
+from shuddhi import cli as factory
+from shuddhi.neardup import load_droplist
+from shuddhi.shards import doc_hash64
 
 BASE = (
     "the quick brown fox jumps over the lazy dog while the cat watches from the "

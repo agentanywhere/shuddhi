@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-import factory
+from shuddhi import cli as factory
 
 HINDI_DOC = "भारत एक विशाल देश है और यहाँ अनेक भाषाएँ बोली जाती हैं। " * 8
 ENG_DOC = (

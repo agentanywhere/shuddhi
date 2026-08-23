@@ -32,7 +32,7 @@ import os
 
 import numpy as np
 
-from dedup import NUM_PERM, LSH_BANDS, LSH_ROWS, VERIFY_MIN_AGREE, minhash_signature, shingle_hashes
+from .dedup import NUM_PERM, LSH_BANDS, LSH_ROWS, VERIFY_MIN_AGREE, minhash_signature, shingle_hashes
 
 SIG_COLS = NUM_PERM
 # fixed odd multipliers for the arithmetic band key (collisions are fine —
@@ -45,7 +45,7 @@ _BAND_MULT = np.array(
 
 def write_shard_sigs(shard_path: str, out_dir: str, shard_id: str) -> dict:
     """Phase 'sig' for one shard. Returns counts."""
-    import shards as shards_mod
+    from . import shards as shards_mod
 
     sig_path = os.path.join(out_dir, f"{shard_id}.sigs.u64")
     valid_path = os.path.join(out_dir, f"{shard_id}.valid.u8")

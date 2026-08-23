@@ -132,7 +132,7 @@ until a human records a `reviewed_by` field:
 ### Checking
 
 ```bash
-python3 factory.py check --registry my-registry.json
+shuddhi check --registry my-registry.json
 ```
 
 Prints the accepted ledger and every refusal with its reason, and **exits 2
@@ -160,7 +160,7 @@ described as a corpus fact is exactly the kind of claim this tool exists to
 prevent.
 
 ```bash
-python3 factory.py run --registry $REG --shard news_eng --out run/ \
+shuddhi run --registry $REG --shard news_eng --out run/ \
     --sample-every 50 \
     --lm lms/eng.lm.gz \          # perplexity distribution
     --pii-scan \                  # PII prevalence
@@ -175,7 +175,7 @@ Shards are independent: run them in parallel.
 mints `corpus_build_hash`:
 
 ```bash
-python3 factory.py merge --registry $REG --out run/
+shuddhi merge --registry $REG --out run/
 ```
 
 It refuses to merge a partial corpus unless you pass `--partial`, which
@@ -207,10 +207,10 @@ boilerplate templates, re-syndicated articles, a page with one line changed
 
 ```bash
 # per shard, parallelisable: sign every document
-python3 factory.py neardup-sig --registry $REG --shard news_eng --sig-dir sigs/
+shuddhi neardup-sig --registry $REG --shard news_eng --sig-dir sigs/
 
 # once, across everything: cluster and write the drop list
-python3 factory.py neardup-merge --registry $REG --run-dir run/ \
+shuddhi neardup-merge --registry $REG --run-dir run/ \
     --sig-dir sigs/ --out neardup-drop.u64
 ```
 
@@ -319,7 +319,7 @@ system. Names and addresses need NER and are not covered.
 ## 7. Build: applying the filters
 
 ```bash
-python3 factory.py build --registry $REG --run-dir run/ --build-out build/ \
+shuddhi build --registry $REG --run-dir run/ --build-out build/ \
     --lm-dir lms/ --ppx-percentile 99 \
     --neardup-drop neardup-drop.u64 \
     --toxicity --toxicity-lexicon-dir lexicon/ \
@@ -351,10 +351,10 @@ Nothing ever modifies your raw shards.
 Build partitions in parallel and union them:
 
 ```bash
-python3 factory.py build ... --shards shardA,shardB --build-out part1/ &
-python3 factory.py build ... --shards shardC,shardD --build-out part2/ &
+shuddhi build ... --shards shardA,shardB --build-out part1/ &
+shuddhi build ... --shards shardC,shardD --build-out part2/ &
 wait
-python3 factory.py build-union --build-outs part1,part2 --out build/
+shuddhi build-union --build-outs part1,part2 --out build/
 ```
 
 Because the build hash is defined over a *set*, the union of disjoint
@@ -393,7 +393,7 @@ You do not have to build a corpus with Shuddhi to get a receipt for it. If
 another pipeline produced it, fingerprint the result:
 
 ```bash
-python3 factory.py attest --corpus ./out-from-datatrove/ \
+shuddhi attest --corpus ./out-from-datatrove/ \
     --corpus-id fineweb-slice --registry my-registry.json --scan
 ```
 
@@ -409,7 +409,7 @@ blank, because a blank reads as "nothing to declare".
 ## 11. Regulatory reporting
 
 ```bash
-python3 factory.py report --eu-ai-act --registry my-registry.json \
+shuddhi report --eu-ai-act --registry my-registry.json \
     --manifest build/BUILD-MANIFEST.json > article-53.md
 ```
 

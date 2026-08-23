@@ -1,4 +1,4 @@
-from ngram_lm import CharTrigramLM
+from shuddhi.ngram_lm import CharTrigramLM
 
 TRAIN = [
     "the quick brown fox jumps over the lazy dog near the quiet river bank",

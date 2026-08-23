@@ -14,7 +14,7 @@ jobs:
       - checkout
       - run:
           name: Check the registry
-          command: python /app/factory.py check --registry registry.json
+          command: shuddhi check --registry registry.json
 
   corpus-build:
     executor: shuddhi
@@ -22,7 +22,7 @@ jobs:
       - checkout
       - run:
           name: Build the corpus
-          command: python /app/factory.py pipeline --registry registry.json --out shuddhi-out --emit none
+          command: shuddhi pipeline --registry registry.json --out shuddhi-out --emit none
       - store_artifacts:
           path: shuddhi-out
           destination: corpus-receipt

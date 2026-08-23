@@ -5,7 +5,7 @@ import json
 
 import pytest
 
-import registry
+from shuddhi import registry
 
 
 def write_registry(tmp_path, shards):

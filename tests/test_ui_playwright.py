@@ -24,8 +24,8 @@ import pytest
 pytest.importorskip("playwright", reason="playwright not installed")
 from playwright.sync_api import ConsoleMessage, sync_playwright  # noqa: E402
 
-import factory  # noqa: E402
-import ui as ui_mod  # noqa: E402
+from shuddhi import cli as factory  # noqa: E402
+from shuddhi import ui as ui_mod  # noqa: E402
 
 
 def _free_port() -> int:

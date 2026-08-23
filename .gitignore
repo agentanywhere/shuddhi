@@ -16,3 +16,6 @@ lms/
 
 # Generated receipts — `attest` writes these next to the corpus it attested.
 ATTESTATION.json
+
+# packaging artefacts
+*.egg-info/

@@ -15,6 +15,6 @@ case "${1:-doctor}" in
     exec /bin/bash
     ;;
   *)
-    exec python /app/factory.py "$@"
+    exec shuddhi "$@"
     ;;
 esac

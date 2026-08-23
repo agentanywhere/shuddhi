@@ -1,4 +1,4 @@
-import quality
+from shuddhi import quality
 
 CLEAN_PROSE = (
     "The monsoon arrived early this year across the western coast. Farmers in the "

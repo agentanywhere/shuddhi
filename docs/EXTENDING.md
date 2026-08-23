@@ -38,8 +38,8 @@ Then:
 
 ```bash
 pip install acme-shuddhi
-python3 factory.py plugins                        # confirm it is visible
-python3 factory.py build ... --plugin acme-medical-phi
+shuddhi plugins                        # confirm it is visible
+shuddhi build ... --plugin acme-medical-phi
 ```
 
 A complete, installable example is in [`examples/plugin/`](../examples/plugin/).

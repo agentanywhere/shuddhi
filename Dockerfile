@@ -25,6 +25,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 # numpy is required; the rest are the optional extras, included here because an
 # image exists precisely so nobody has to think about extras.
 RUN pip install --no-cache-dir \
+        "setuptools>=68" \
         "numpy>=1.24" \
         tokenizers \
         trafilatura \
@@ -33,6 +34,10 @@ RUN pip install --no-cache-dir \
 
 WORKDIR /app
 COPY . /app
+# Install the package itself so `shuddhi` is on PATH and imports resolve
+# from anywhere, not just /app. --no-build-isolation keeps the image build
+# offline-capable: setuptools is already in the layer above.
+RUN pip install --no-cache-dir --no-deps --no-build-isolation -e .
 
 # Non-root by default. /work is the mount point for your corpora and outputs.
 RUN useradd --create-home --uid 1000 shuddhi \

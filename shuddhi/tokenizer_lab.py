@@ -35,7 +35,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-import registry as registry_mod
+from . import registry as registry_mod
 
 SEPARATOR = b"\n\n"
 DEFAULT_CHUNKS = 64
