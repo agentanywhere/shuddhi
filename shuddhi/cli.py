@@ -275,6 +275,21 @@ def cmd_doctor(args) -> int:
         where = "no virtual environment (using a system or user Python)"
     print(f"environment {where}")
 
+    # The failure this command exists for: a venv is activated in the shell,
+    # but the `shuddhi` that ran is a different install on a different
+    # interpreter. Everything pip put into the venv is then "absent", and the
+    # symptom looks like a broken install rather than a PATH problem. Seen in
+    # the wild with conda's base env shadowing a freshly activated .venv.
+    if venv and os.path.realpath(sys.prefix) != os.path.realpath(venv):
+        print(f"  {bad('MISMATCH')}  a venv is activated ({venv}) but this "
+              f"command ran on {sys.executable}, which is not inside it.\n"
+              f"            Anything you pip-installed into the venv will show "
+              f"as absent below. Run the venv's copy directly:\n"
+              f"                {venv}/bin/shuddhi doctor\n"
+              f"            or, in this shell:  hash -r  (then try again), or "
+              f"deactivate any conda env so the venv comes first on PATH.")
+        ready = False
+
     required = [("numpy", "array maths: dedup, manifests, builds")]
     optional = [
         ("tokenizers", "token accounting and the tokenizer lab", "tokens"),
@@ -297,7 +312,7 @@ def cmd_doctor(args) -> int:
             # Nested f-strings only became legal in 3.12; this project
             # supports 3.10, so build the inner string first.
             extra_hint = dim(f"(optional: pip install '.[{extra}]')")
-            print(f"  [{dim('absent')}]  {mod} — {why}  {extra_hint}")
+            print(f"  [{warn('absent')}]  {mod} — {why}  {extra_hint}")
 
     print("optional data files (fetch or supply your own)")
     for path, why in (
@@ -306,13 +321,14 @@ def cmd_doctor(args) -> int:
     ):
         print(f"  [{ok('ok')}]      {path} — {dim(why)}"
               if os.path.exists(path)
-              else f"  [{dim('absent')}]  {path} — {why}")
+              else f"  [{warn('absent')}]  {path} — {why}")
 
     if ready:
-        print(f"\n{ok('READY')} — the pipeline can run in this environment.")
+        print(f"\n{ok('READY — the pipeline can run in this environment.')}")
     else:
-        print(f"\n{bad('NOT READY')} — install the missing REQUIRED packages into THIS "
-              f"interpreter:\n    {sys.executable} -m pip install -e '.[lid,tokens,extract,dev]'")
+        print(f"\n{bad('NOT READY')} — fix what is marked in red above. For missing "
+              f"REQUIRED packages, install into THIS interpreter:\n"
+              f"    {sys.executable} -m pip install -e '.[lid,tokens,extract,dev]'")
     return 0 if ready else 1
 
 
@@ -861,8 +877,7 @@ def cmd_build(args) -> int:
                f"--sample-every 1 on a shard of at least "
                f"{MIN_PPX_SAMPLE} documents, or lower --min-ppx-sample if you "
                f"accept a noisier cutoff.")
-        print(f"WARNING: {msg}", file=sys.stderr)
-        ppx_off_warnings.append(msg)
+        ppx_off_warnings.append(msg)  # surfaced once, via build_warnings
 
     if args.lm_dir and not max_bits and not thin_ppx:
         print("WARNING: --lm-dir was given but the measured run has no perplexity "
