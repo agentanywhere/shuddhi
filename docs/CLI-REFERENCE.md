@@ -8,7 +8,10 @@ docker run --rm shuddhi <command> [options]
 Every command is safe to re-run. Nothing ever writes to your raw shards.
 
 **Exit codes:** `0` success · `1` environment not ready (`doctor`) · `2`
-refused or misconfigured — a refused shard, a missing shard output without
+refused or misconfigured (also every user-facing error: a missing file,
+malformed JSON, a path typo — each prints a sentence and a next step rather
+than a traceback; set `SHUDDHI_TRACEBACK=1` to see the stack) · `130`
+interrupted — a refused shard, a missing shard output without
 `--partial`, or incompatible partitions.
 
 ---
@@ -26,8 +29,11 @@ install command for *that* interpreter.
 
 ## `check --registry <file>`
 
-Validates the registry and prints the provenance ledger plus every refusal
-with its reason. Opens no shard files. **Exits `2` if anything was refused** —
+Validates the registry, prints the provenance ledger plus every refusal
+with its reason, and confirms each accepted shard's file exists and is not
+empty — a `stat`, not a read, so a refused shard is still never opened.
+Catching a path typo here rather than at `run` means it surfaces where you
+are already looking. **Exits `2` if anything was refused** —
 suitable as a CI gate.
 
 ---

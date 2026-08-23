@@ -40,6 +40,8 @@ import json
 import re
 from dataclasses import dataclass
 
+from .errors import UserError
+
 ALLOWED_DATA_CLASSES = frozenset({"public", "licensed", "synthetic-own"})
 FORBIDDEN_DATA_CLASSES = frozenset({"customer", "customer-derived", "evaluation-only"})
 REQUIRED_FIELDS = (
@@ -128,11 +130,31 @@ def load_registry(path: str) -> tuple[dict, list[Shard], list[Refusal]]:
 
     Never opens any shard file — admission is decided on the ledger alone.
     """
-    with open(path, "rb") as f:
-        raw = f.read()
-    doc = json.loads(raw)
+    try:
+        with open(path, "rb") as f:
+            raw = f.read()
+    except FileNotFoundError:
+        raise UserError(
+            f"registry file not found: {path}",
+            "Copy the example and edit the paths:\n"
+            "    cp examples/registry.json my-registry.json\n"
+            "Every shard needs source, license, date_acquired, data_class "
+            "and language.",
+        ) from None
+    except IsADirectoryError:
+        raise UserError(f"--registry expects a file, but {path} is a directory") from None
+
+    try:
+        doc = json.loads(raw)
+    except json.JSONDecodeError as e:
+        raise UserError(
+            f"{path} is not valid JSON: {e.msg} (line {e.lineno}, column {e.colno})",
+            "A trailing comma or a missing quote is the usual cause.",
+        ) from None
     if doc.get("registry_version") != 1:
-        raise ValueError(f"unsupported registry_version {doc.get('registry_version')!r}")
+        raise UserError(
+            f"unsupported registry_version {doc.get('registry_version')!r}",
+            "This build understands registry_version 1.")
 
     meta = {
         "corpus_id": doc.get("corpus_id", "unnamed"),
