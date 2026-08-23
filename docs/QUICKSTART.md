@@ -141,7 +141,32 @@ python3 factory.py check --registry my-registry.json
 Fix whatever it refuses before going further. (It exits non-zero when
 anything is refused — that is intentional, so CI can gate on it.)
 
-### Measure, then build
+### Run it — one command
+
+```bash
+python3 factory.py pipeline --registry my-registry.json --out shuddhi-out/
+```
+
+That is the whole pipeline: language models, measurement, corpus manifest,
+near-duplicate clustering, filtering, the cleaned corpus, an Article 53 draft
+and an HTML receipt you can open in a browser. It runs the stages in the
+right order, which matters — the language models must exist *before* the
+measurement pass or the perplexity filter has no distribution to work from.
+
+Useful switches:
+
+```bash
+--emit none              # manifest only; evaluate a configuration without writing a corpus
+--no-perplexity          # skip the language models (sensible under a few thousand documents)
+--no-neardup             # skip near-duplicate clustering
+--eval-set my-evals.jsonl --toxicity-lexicon-dir lexicon/
+--allow-refusals         # proceed with the accepted shards when the registry has refusals
+```
+
+When you want to parallelise across shards, resume after a failure, or
+inspect between phases, run the stages yourself:
+
+### The same thing, stage by stage
 
 ```bash
 REG=my-registry.json
