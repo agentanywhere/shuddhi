@@ -4,7 +4,18 @@ The image exists so nobody has to think about Python versions, virtual
 environments, or optional wheels. It contains the engine, every optional
 dependency, the test suite, and the example corpus.
 
-## Build
+## Get the image
+
+```bash
+docker pull ghcr.io/agentanywhere/shuddhi:latest
+```
+
+Multi-architecture (linux/amd64 and linux/arm64). Tags: `latest` tracks main;
+`1.2.0`, `1.2`, `1` follow releases; `sha-<short>` pins an exact commit. **Pin
+a version in anything reproducible** — a receipt produced by `:latest` cannot
+say which engine made it.
+
+Or build it yourself:
 
 ```bash
 docker build -t shuddhi .
