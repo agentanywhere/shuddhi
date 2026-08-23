@@ -277,7 +277,7 @@ td.n{text-align:right;font-variant-numeric:tabular-nums;font-family:var(--mono);
 }
 .ok{color:var(--ok)}
 </style>
-<header><svg width="19" height="19" viewBox="0 0 132 132" aria-hidden="true" style="flex:0 0 auto"><path d="M66.00,12.00 L79.32,29.42 L100.36,25.29 L100.36,46.75 L120.65,53.42 L107.66,70.29 L120.65,87.16 L100.36,93.83 L100.36,115.29 L79.32,111.16 L66.00,128.58 L52.68,111.16 L31.64,115.29 L31.64,93.83 L11.35,87.16 L24.34,70.29 L11.35,53.42 L31.64,46.75 L31.64,25.29 L52.68,29.42 Z" fill="none" stroke="#3a81f6" stroke-width="9" stroke-linejoin="round" stroke-linecap="round"/><circle cx="66" cy="66" r="12" fill="#3a81f6"/></svg><b>Shuddhi</b><span id=root></span></header>
+<header><svg width="20" height="20" viewBox="0 0 132 132" aria-hidden="true" style="flex:0 0 auto"><path d="M45.5,22.0 L45.5,53.9 A30.0,30.0 0 1 0 66.5,53.9 L66.5,22.0" fill="none" stroke="#3a81f6" stroke-width="10.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M38.5,22.0 L73.5,22.0" fill="none" stroke="#3a81f6" stroke-width="10.5" stroke-linecap="round"/><path d="M66.5,37.0 L97.5,54.0" fill="none" stroke="#3a81f6" stroke-width="10.5" stroke-linecap="round"/><circle cx="101.5" cy="76.0" r="7.6" fill="#3a81f6"/></svg><b>Shuddhi</b><span id=root></span></header>
 <div class=layout>
  <aside><div id=runs></div></aside>
  <main id=main><div class=empty>Loading…</div></main>

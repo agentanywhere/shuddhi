@@ -1,23 +1,30 @@
 #!/usr/bin/env python3
 """Generate the Shuddhi brand asset set from one geometry definition.
 
-The mark: a SEAL. A scalloped stamp — the shape of a certification seal or
-a wax seal — closing around a single solid centre. Many documents in, one
-sealed corpus out.
+The mark: a DISTILLING FLASK. Round bulb, short neck, a side arm, and one
+drop leaving it. शुद्धि means purification, and distillation is the oldest
+and most universally legible picture of purification there is — raw input
+in, one refined thing out, impurities left behind.
 
-How we got here, because the rejects are the argument for the survivor:
+Why this and not the alternatives we drew:
 
-  hexagon            HashiCorp claims it for infrastructure tooling
-  chevrons + dot     that is the download icon at 32px and below
-  bars + dot         that is the wifi icon
-  ring with a top gap  that is the power button
-  scalloped + check  that is the verified badge
+  hexagon             HashiCorp claims it for infrastructure tooling
+  chevrons + dot      the download glyph at 32px and below
+  bars + dot          the wifi glyph
+  ring with a top gap the power button
+  scallop + check     the verified badge
+  bare droplet        DigitalOcean
+  scalloped seal      workable, but badges are everywhere; this is ownable
 
-Every literal illustration of "filtering" collided with a UI glyph, which
-is the metaphor telling us something: filtering is the commodity half of
-this product. Attestation is the half that is ours, and a stamp is the
-oldest and most universal way to draw it — a notary seal reads the same in
-every market, which matters for an international audience.
+A retort is rare in developer tooling (most "lab" icons are Erlenmeyer
+triangles or test tubes), it reads the same in every market, and it matches
+what the product name literally means. Proportions are tuned so the bulb —
+which is the silhouette — survives 16px.
+
+Note on the ML sense of "distillation" (teacher-to-student model
+compression): use this as a VISUAL metaphor and in copy, but never describe
+Shuddhi as "a distillation tool", which would misdirect the exact audience
+we want.
 """
 
 import math
@@ -32,7 +39,7 @@ BG_TILE = "#0a0c18"
 
 CX = CY = 66.0
 R = 54.0
-SW = 9.0
+SW = 10.5
 GAP_HALF_DEG = 26.0
 
 
@@ -47,29 +54,21 @@ def _pt(angle_deg: float) -> tuple[float, float]:
 
 
 def mark_paths(colour: str) -> str:
-    """A scalloped seal with a single mark at its centre.
-
-    Every literal reading of "filter" collided with a UI icon: chevrons over
-    a dot is the download glyph, bars over a dot is the wifi glyph, and a
-    ring with a gap at the top is the power button. A hexagon belongs to
-    HashiCorp. So the mark says the thing that is actually ours — this was
-    SEALED — in the oldest visual language there is for it: a stamp.
-    """
-    pts = []
-    n = BUMPS * 2
-    for i in range(n):
-        ang = math.pi / 2 + i * (2 * math.pi / n)
-        rad = R if i % 2 == 0 else R_INNER
-        pts.append((CX + rad * math.cos(ang), CY - rad * math.sin(ang)))
-    d = f"M{pts[0][0]:.2f},{pts[0][1]:.2f}"
-    for i in range(1, len(pts) + 1):
-        x, y = pts[i % len(pts)]
-        d += f" L{x:.2f},{y:.2f}"
-    d += " Z"
-    seal = (f'<path d="{d}" fill="none" stroke="{colour}" stroke-width="{SW}" '
-            f'stroke-linejoin="round" stroke-linecap="round"/>')
-    core = f'<circle cx="{CX:.0f}" cy="{CY:.0f}" r="{DOT_R}" fill="{colour}"/>'
-    return seal + core
+    sw = SW
+    half_neck = 10.5
+    bulb_r, cx, cy, neck_top = 30.0, 56.0, 82.0, 22.0
+    dy = math.sqrt(max(bulb_r ** 2 - half_neck ** 2, 1))
+    join_y = cy - dy
+    L, R = cx - half_neck, cx + half_neck
+    body = (f'<path d="M{L},{neck_top} L{L},{join_y:.1f} A{bulb_r},{bulb_r} 0 1 0 {R},{join_y:.1f} '
+            f'L{R},{neck_top}" fill="none" stroke="{colour}" stroke-width="{sw}" '
+            f'stroke-linecap="round" stroke-linejoin="round"/>')
+    lip = (f'<path d="M{L - 7},{neck_top} L{R + 7},{neck_top}" fill="none" stroke="{colour}" '
+           f'stroke-width="{sw}" stroke-linecap="round"/>')
+    arm = (f'<path d="M{R},{neck_top + 15} L{R + 31},{neck_top + 32}" fill="none" stroke="{colour}" '
+           f'stroke-width="{sw}" stroke-linecap="round"/>')
+    drop = f'<circle cx="{R + 35}" cy="{neck_top + 54}" r="{sw * 0.72:.1f}" fill="{colour}"/>'
+    return body + lip + arm + drop
 
 
 def symbol(colour: str, size: int = 1024) -> str:
@@ -97,7 +96,7 @@ def lockup(ink: str, muted: str, name: str) -> str:
     """
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="320" viewBox="0 0 480 128" role="img" aria-labelledby="t{name} d{name}">
 <title id="t{name}">Shuddhi</title>
-<desc id="d{name}">The Shuddhi seal beside the wordmark Shuddhi, with शुद्धि set beneath it.</desc>
+<desc id="d{name}">The Shuddhi flask beside the wordmark Shuddhi, with शुद्धि set beneath it.</desc>
 <g transform="translate(4,-2)">{mark_paths(BLUE)}</g>
 <text x="150" y="66" font-family="IBM Plex Sans, Geist, Helvetica Neue, Arial, sans-serif"
       font-size="44" font-weight="600" letter-spacing="-0.8" fill="{ink}">Shuddhi</text>
