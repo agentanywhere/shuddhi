@@ -119,10 +119,11 @@ it in the same manifest, so nothing is lost.
   of their training data.
 - **Providers of general-purpose models placed on the EU market**, who owe the
   AI Office an Article 53(1)(d) summary.
-- **Teams working in Indic languages** — the language ID, script handling and
-  tokenizer tooling were built for 15 Indian languages, not retrofitted onto
-  an English pipeline.
 - **Researchers** who need benchmark-contamination screening they can point at.
+
+The pipeline is language-agnostic — it runs on an English or European corpus
+out of the box, and its script handling and language ID extend cleanly to
+non-Latin scripts (it was proven at scale on fifteen Indian languages).
 
 If you are cleaning a scratch dataset nobody will ever audit, you do not need
 this — reach for a curation pipeline and move on.
@@ -217,7 +218,7 @@ dangerous misreading.
 | Quality heuristics | `quality.py` |
 | Perplexity proxy — per-language char-trigram LM | `ngram_lm.py` |
 | Toxicity — lexicon tier, pluggable and sha-pinned | `toxicity.py` |
-| PII — scan and redact (email/phone/Aadhaar/PAN/Luhn cards/IP) | `pii.py` |
+| PII — scan and redact (email, IBAN, Luhn cards, IP; India-specific phone/Aadhaar/PAN) | `pii.py` |
 | Domain classification | `domain.py` |
 | Contamination screen against your eval sets | `contamination.py` |
 | Applied-filter builds with chained hashes | `builder.py` |

@@ -353,8 +353,11 @@ a sample. Any document overlapping your benchmarks is dropped.
 
 ### PII (`--pii keep|redact|drop`, default `redact`)
 
-Detects email addresses, Indian mobile numbers, Aadhaar-formatted numbers,
-PAN, Luhn-valid card numbers, and IPv4 addresses.
+Detects email addresses, IBANs (validated by their ISO 13616 mod-97 check),
+Luhn-valid card numbers, and IPv4 addresses, plus the India-specific mobile,
+Aadhaar and PAN formats. The structured identifiers (IBAN, card) are checksum-
+validated rather than matched by shape, so invoice and order numbers do not
+redact. Region-neutral detectors find nothing in a corpus that has none.
 
 - `redact` (default) keeps the document and rewrites each match to a typed
   placeholder such as `[PII:email]`. Redaction processes the **entire**
