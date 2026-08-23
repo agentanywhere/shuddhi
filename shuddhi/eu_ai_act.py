@@ -76,8 +76,8 @@ def _fmt_int(n: int) -> str:
     return f"{n:,}"
 
 
-# The fields that only a filtered build (`factory.py build`) can produce. A
-# corpus manifest from `factory.py run` carries none of them, and the two are
+# The fields that only a filtered build (`shuddhi build`) can produce. A
+# corpus manifest from `shuddhi run` carries none of them, and the two are
 # easy to confuse because both are called a manifest and both sit in runs/.
 FILTERED_BUILD_KEYS = ("filtered_build_hash", "kept_docs")
 
@@ -239,10 +239,12 @@ def build_summary(meta: dict, accepted: list, refused: list,
         L.append(f"- Filter configuration: `sha256:{manifest.get('filter_config_sha256', '')}`")
         L.append(f"- Documents retained: **{_fmt_int(manifest.get('kept_docs', 0))}**")
         L.append("")
-        L.append("The filtered build hash is chained from the parent corpus hash "
-                 "and the filter-configuration hash, so the summary above is bound "
-                 "to a specific, reproducible artefact. Re-running the same "
-                 "configuration over the same corpus reproduces the same hash.")
+        L.append("The filtered build hash is a content hash of the documents "
+                 "selected for this build, recorded here together with the parent "
+                 "corpus hash and the sha256 of the filter configuration that "
+                 "selected them. Re-running the same configuration over the same "
+                 "corpus reproduces the same hash, and a third party holding the "
+                 "same source documents can recompute it independently.")
     elif manifest:
         # A corpus manifest (from `run`), not a filtered build manifest (from
         # `build`). It identifies the accepted corpus but records nothing about
@@ -259,7 +261,7 @@ def build_summary(meta: dict, accepted: list, refused: list,
                  "filter pass, so documents retained, redaction counts and the "
                  "filtered build hash are unknown here and are deliberately not "
                  "reported as zero. Pass the `BUILD-MANIFEST.json` written by "
-                 "`factory.py build` to bind this summary to a filtered build.")
+                 "`shuddhi build` to bind this summary to a filtered build.")
         gaps.append("Block 3: filtered build manifest (documents retained, "
                     "redactions, filtered build hash)")
     else:

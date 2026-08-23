@@ -150,3 +150,21 @@ def test_doctor_runs_and_reports(capsys):
     out = capsys.readouterr().out
     assert rc in (0, 1)
     assert "python" in out and ("READY" in out or "NOT READY" in out)
+
+
+def test_no_stale_command_names_anywhere_in_the_package():
+    """The CLI was once called factory.py. Renaming it left twelve references
+    behind, three of them in strings printed to users -- including the hint
+    shown when the perplexity filter has no distribution, which told people to
+    run a command that no longer existed. Advice that cannot be followed is
+    worse than no advice, so the old name is pinned out of the package."""
+    import glob
+    import pathlib
+
+    offenders = []
+    for path in glob.glob("shuddhi/*.py"):
+        text = pathlib.Path(path).read_text(encoding="utf-8")
+        for i, line in enumerate(text.splitlines(), 1):
+            if "factory.py" in line:
+                offenders.append(f"{path}:{i}: {line.strip()}")
+    assert not offenders, "stale command name:\n" + "\n".join(offenders)

@@ -47,7 +47,14 @@ A complete, installable example is in [`examples/plugin/`](../examples/plugin/).
 ## `identity()` is the load-bearing part
 
 Whatever it returns is folded into the build's `filter_config_sha256`, which
-is chained into `filtered_build_hash`.
+is recorded in the build manifest beside the hashes.
+
+To be precise about what that does and does not do: `filter_config_sha256`
+records *how* the corpus was selected. `filtered_build_hash` is computed over
+the selected documents themselves and does not include the config — so if
+your filter changes its verdicts, the document set changes and the hash moves
+with it. What the config sha adds is the ability to tell two builds apart
+that selected the same documents by different means.
 
 **A plugin that changes its verdicts without changing its identity breaks the
 receipt** — it would let two materially different corpora claim the same

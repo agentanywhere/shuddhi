@@ -88,9 +88,23 @@ hygiene, not as a DLP control.
 
 ### What happens if two people build the same corpus with different settings?
 
-Different `filter_config_sha256`, therefore different `filtered_build_hash`,
-both chained to the same `corpus_build_hash`. That is the intended behaviour:
-the config is part of the identity.
+Different `filter_config_sha256`, and — if the settings actually selected
+different documents — a different `filtered_build_hash`. Both are recorded
+against the same `corpus_build_hash`.
+
+Worth being precise, because it surprises people: `filtered_build_hash` is a
+content hash of the *selected documents*, not of the settings. Two builds
+whose settings differ but which happen to keep exactly the same documents
+share a `filtered_build_hash` and are told apart by their
+`filter_config_sha256`. That is deliberate — hashing the config into the
+build hash would mean nobody could verify the number without also having
+your configuration, and independent verifiability is the point.
+
+One consequence to know: `--pii redact` and `--pii keep` select the same
+documents, so they share a `filtered_build_hash` while emitting different
+text. The emitted bytes are covered by each output file's sha256, also in
+the manifest. If what the model literally read matters to your claim, cite
+those too.
 
 ### Can I trust the hash if I parallelise the build?
 
