@@ -7,6 +7,8 @@ fields. A scaffold that quietly passed the gate would defeat the gate.
 
 import json
 
+import pytest
+
 from shuddhi import cli as factory
 
 
@@ -110,3 +112,47 @@ def test_empty_directory_points_at_the_bundled_sample(tmp_path, monkeypatch, cap
     err = capsys.readouterr().err
     assert rc == 2
     assert "no .txt files" in err and "extract" in err
+
+
+def test_provenance_can_be_declared_on_the_command_line(tmp_path, capsys):
+    """Hand-editing JSON mid-flow is friction; declaring it in the command
+    is the same assertion by a human, without the editor."""
+    d = corpus_at(tmp_path, names=("news_eng.txt",))
+    out = tmp_path / "r.json"
+    assert factory.main([
+        "init", "--corpus", str(d), "--out", str(out),
+        "--source", "Example crawl", "--license", "CC-BY-4.0",
+        "--data-class", "public", "--date-acquired", "2026-08-23",
+    ]) == 0
+    s = json.loads(out.read_text())["shards"][0]
+    assert s["source"] == "Example crawl" and s["data_class"] == "public"
+    assert factory.main(["check", "--registry", str(out)]) == 0
+
+
+def test_a_blanket_data_class_is_never_applied_to_suspicious_names(tmp_path, capsys):
+    """The footgun: one customer export in the folder would otherwise be
+    labelled synthetic-own by a flag the user typed once."""
+    d = corpus_at(tmp_path, names=("news_eng.txt", "customer_export_eng.txt"))
+    out = tmp_path / "r.json"
+    factory.main([
+        "init", "--corpus", str(d), "--out", str(out),
+        "--source", "Example", "--license", "CC-BY-4.0",
+        "--data-class", "synthetic-own", "--date-acquired", "2026-08-23",
+    ])
+    by_id = {s["shard_id"]: s for s in json.loads(out.read_text())["shards"]}
+    assert by_id["news_eng"]["data_class"] == "synthetic-own"
+    assert by_id["customer_export_eng"]["data_class"] == "", \
+        "a suspiciously-named shard must not inherit a blanket class"
+    assert "left unclassified" in capsys.readouterr().out
+    # and it stays refused until a human classifies it
+    assert factory.main(["check", "--registry", str(out)]) == 2
+
+
+def test_customer_class_still_cannot_be_set_through_init():
+    """--data-class deliberately offers no customer option."""
+    import argparse
+
+    parser = factory.main.__globals__["argparse"]
+    with pytest.raises(SystemExit):
+        factory.main(["init", "--corpus", ".", "--out", "x.json",
+                      "--data-class", "customer"])
