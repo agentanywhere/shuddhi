@@ -5,6 +5,7 @@ Internal engine name: Tatva Data Factory.
 
 Subcommands:
   doctor  Check that this Python environment can run the pipeline.
+  ui      Browse the builds on this machine in a browser (localhost only).
   check   Validate a shard registry: print the provenance ledger and every
           refusal. Exit 2 if anything was refused (refusal is the default
           for untagged or customer-class data).
@@ -51,6 +52,7 @@ import quality as quality_mod
 import registry as registry_mod
 import shards as shards_mod
 from lid import make_lid
+from progress import Reporter, human
 
 FACTORY_VERSION = "1.2.0"
 
@@ -59,7 +61,7 @@ DEFAULT_MINHASH_EVERY = 4
 DEFAULT_TOKEN_EVERY = 20
 DEFAULT_TOKEN_BYTE_BUDGET = 30_000_000
 SCORE_BINS = 10
-PROGRESS_EVERY = 500_000
+PROGRESS_TICK = 2_000
 
 
 def _env_info() -> dict:
@@ -149,6 +151,13 @@ def cmd_report(args) -> int:
     else:
         print(text, end="")
     return 0
+
+
+def cmd_ui(args) -> int:
+    """Serve the local viewer over the builds in a directory."""
+    import ui as ui_mod
+
+    return ui_mod.serve(args.dir, port=args.port, open_browser=not args.no_open)
 
 
 def cmd_plugins(args) -> int:
@@ -296,6 +305,12 @@ def cmd_run(args) -> int:
     pii_docs = 0
 
     file_bytes = os.path.getsize(shard.path)
+    rep = Reporter(args.out)
+    rep.phase(f"measuring {shard.shard_id}")
+    # Documents are not countable without reading the file, so the bar is
+    # driven by an estimate from the mean document size so far. It is honest
+    # about being an estimate: the finish line reports the true count.
+    est_docs = None
     t0 = time.time()
     cpu0 = time.process_time()
     truncated = False
@@ -361,14 +376,16 @@ def cmd_run(args) -> int:
                 if token_meter.full and token_fill_byte_depth is None:
                     token_fill_byte_depth = doc_bytes_total
 
+        if n_docs == 2000:
+            est_docs = max(n_docs, int(file_bytes / max(1, doc_bytes_total / n_docs)))
+
         if args.max_docs and n_docs >= args.max_docs:
             truncated = True
             break
 
-        if n_docs % PROGRESS_EVERY == 0:
-            rate = doc_bytes_total / max(1e-9, time.time() - t0) / 1e6
-            print(f"  {shard.shard_id}: {n_docs:,} docs, {doc_bytes_total/1e9:.1f} GB, {rate:.0f} MB/s",
-                  flush=True)
+        if n_docs % PROGRESS_TICK == 0:
+            rep.update(n_docs, est_docs, bytes_done=doc_bytes_total,
+                       note=shard.shard_id)
 
     wall = time.time() - t0
     cpu = time.process_time() - cpu0
@@ -438,8 +455,10 @@ def cmd_run(args) -> int:
     stats_path = os.path.join(args.out, f"{shard.shard_id}.stats.json")
     with open(stats_path, "w", encoding="utf-8") as f:
         json.dump(stats, f, ensure_ascii=False, indent=1)
-    print(f"  {shard.shard_id}: DONE {n_docs:,} docs, {doc_bytes_total/1e9:.2f} GB, "
-          f"dup {stats['full_pass']['exact_dup_rate']:.2%}, {wall/60:.1f} min", flush=True)
+    rep.finish(
+        f"{shard.shard_id}: {n_docs:,} documents, {human(doc_bytes_total)}, "
+        f"{stats['full_pass']['exact_dup_rate']:.2%} exact duplicates",
+        shard=shard.shard_id, docs=n_docs, bytes=doc_bytes_total)
     return 0
 
 
@@ -619,6 +638,8 @@ def cmd_build(args) -> int:
     index = HashSetIndex.from_run_dir(args.run_dir, shard_ids)
 
     t0 = time.time()
+    rep = Reporter(args.build_out)
+    rep.phase("applying filters")
     per_shard = {}
     kept_arrays = []
     for s in build_shards:  # registry order = deterministic keep-first order
@@ -634,7 +655,10 @@ def cmd_build(args) -> int:
         kept.tofile(os.path.join(args.build_out, f"{s.shard_id}.kept.u64"))
         kept_arrays.append(kept)
         per_shard[s.shard_id] = r
-        print(f"  {s.shard_id}: kept {r['kept_docs']:,}, dropped {r['dropped']}", flush=True)
+        dropped = {k: v for k, v in r["dropped"].items() if v}
+        rep.finish(f"{s.shard_id}: kept {r['kept_docs']:,}"
+                   + (f", dropped {dropped}" if dropped else ""),
+                   shard=s.shard_id, kept=r["kept_docs"], dropped=dropped)
 
     fbh = filtered_build_hash(kept_arrays)
     total_kept = int(sum(a.size for a in kept_arrays))
@@ -656,7 +680,7 @@ def cmd_build(args) -> int:
             "misconfigured — check the per-reason counts."
         )
     for w in build_warnings:
-        print(f"WARNING: {w}", file=sys.stderr)
+        rep.warn(w)
     all_reasons = list(DROP_REASONS) + [f"plugin:{p.name}" for p in plugin_objs]
     dropped_by_reason = {
         reason: sum(r["dropped"].get(reason, 0) for r in per_shard.values())
@@ -1330,6 +1354,13 @@ def main(argv=None) -> int:
                    help="also measure PII and toxicity across the corpus")
     p.add_argument("--out", default=None, help="write ATTESTATION.json here")
     p.set_defaults(fn=cmd_attest)
+
+    p = sub.add_parser("ui", help="browse builds on this machine in a browser")
+    p.add_argument("--dir", default=".",
+                   help="directory to scan for builds (default: current directory)")
+    p.add_argument("--port", type=int, default=8765)
+    p.add_argument("--no-open", action="store_true", help="do not open a browser")
+    p.set_defaults(fn=cmd_ui)
 
     p = sub.add_parser("plugins", help="list installed filter plugins")
     p.set_defaults(fn=cmd_plugins)

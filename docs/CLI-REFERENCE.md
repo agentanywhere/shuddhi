@@ -117,6 +117,48 @@ run's hash set (a shard changed after measurement).
 
 ---
 
+## `ui --dir <dir> [--port 8765] [--no-open]`
+
+Serves a local viewer over the builds in a directory: history, receipts,
+per-shard measurements, drops by reason, warnings and errors, live progress,
+and downloads. Binds to 127.0.0.1 and reads only the filesystem you point it
+at. Zero dependencies.
+
+---
+
+## `pipeline --registry <file> --out <dir>`
+
+Runs the whole pipeline in the correct order with one command: language
+models, measurement, corpus manifest, near-duplicate clustering, filtering,
+report and receipt. See the [Quickstart](QUICKSTART.md#run-it--one-command).
+
+| flag | default | meaning |
+|---|---|---|
+| `--emit` | `text` | `text` writes the cleaned corpus; `none` is manifest-only |
+| `--no-perplexity` | off | skip the language models and perplexity filter |
+| `--no-neardup` | off | skip near-duplicate clustering |
+| `--no-toxicity` | off | skip the toxicity screen |
+| `--allow-refusals` | off | proceed with accepted shards when the registry has refusals |
+
+Every `build` and `run` flag has an equivalent here.
+
+---
+
+## Progress output
+
+Progress adapts to where it is going. On a terminal you get a live bar with a
+rate and an ETA; piped to a file, to `docker logs`, or to CI you get
+timestamped lines every 15 seconds with no cursor tricks or escape codes.
+Override with `SHUDDHI_PROGRESS=tty|plain|none`; `NO_COLOR` and `TERM=dumb`
+are honoured, and a non-UTF-8 terminal falls back to ASCII bar characters.
+
+Every run also appends `events.jsonl` to its output directory — phases,
+progress, warnings and errors, machine-readable. That file is what the
+viewer reads, so the UI is a view over the log the run already wrote rather
+than a second implementation of progress.
+
+---
+
 ## `plugins`
 
 Lists installed filter plugins with their versions and identities. See
