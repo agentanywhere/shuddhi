@@ -1,7 +1,7 @@
 [project]
-name = "tatva-data-factory"
+name = "shuddhi"
 version = "1.2.0"
-description = "Receipts-first dataset cleansing engine: provenance-gated ingest, reproducible corpus build hashes, chained filtered builds (public product name: Shuddhi)"
+description = "Prove what your model was trained on: provenance-gated ingest, reproducible corpus build hashes, and filtered builds whose identity is chained to every filter that made them"
 requires-python = ">=3.10"
 license = "Apache-2.0"
 license-files = ["LICENSE", "NOTICE"]
@@ -12,7 +12,6 @@ classifiers = [
   "Development Status :: 4 - Beta",
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: Apache Software License",
   "Programming Language :: Python :: 3 :: Only",
   "Topic :: Scientific/Engineering :: Artificial Intelligence",
   "Topic :: Text Processing :: Linguistic",
@@ -31,7 +30,7 @@ extract = ["trafilatura"]
 dev = ["pytest"]
 
 [project.scripts]
-data-factory = "factory:main"
+shuddhi = "shuddhi.cli:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -41,8 +40,5 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-py-modules = [
-  "factory", "registry", "shards", "dedup", "neardup", "lid", "quality",
-  "domain", "contamination", "tokens", "ngram_lm", "pii", "toxicity",
-  "extract", "builder", "build_eval_set", "plugins", "tokenizer_lab",
-]
+packages = ["shuddhi"]
+

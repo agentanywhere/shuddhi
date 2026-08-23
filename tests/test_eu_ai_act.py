@@ -8,8 +8,8 @@ field it could not derive — rather than towards formatting.
 
 from pathlib import Path
 
-import eu_ai_act
-import registry as registry_mod
+from shuddhi import eu_ai_act
+from shuddhi import registry as registry_mod
 
 # Resolve repo files from this file's location, never from the working
 # directory. The container runs `pytest /app/tests` with WORKDIR=/work (the

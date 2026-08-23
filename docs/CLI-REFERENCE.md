@@ -1,7 +1,7 @@
 # CLI Reference
 
 ```
-python3 factory.py <command> [options]
+shuddhi <command> [options]
 docker run --rm shuddhi <command> [options]
 ```
 
@@ -81,8 +81,8 @@ records a distribution for `build` to threshold on.
 ## `neardup-sig` / `neardup-merge`
 
 ```bash
-factory.py neardup-sig   --registry R --shard S --sig-dir sigs/
-factory.py neardup-merge --registry R --run-dir run/ --sig-dir sigs/ --out neardup-drop.u64
+shuddhi neardup-sig   --registry R --shard S --sig-dir sigs/
+shuddhi neardup-merge --registry R --run-dir run/ --sig-dir sigs/ --out neardup-drop.u64
 ```
 
 `neardup-sig` writes MinHash signatures for every document of one shard

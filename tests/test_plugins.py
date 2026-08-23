@@ -5,8 +5,8 @@ import json
 
 import pytest
 
-import plugins
-from builder import FilterConfig
+from shuddhi import plugins
+from shuddhi.builder import FilterConfig
 
 
 class Stub:
@@ -101,7 +101,7 @@ def test_name_mismatch_is_rejected(monkeypatch):
 
 
 def test_build_applies_plugin_and_counts_it_separately(tmp_path):
-    import factory
+    from shuddhi import cli as factory
 
     # distinct documents — identical ones would be dropped as exact
     # duplicates before the plugin ever sees them
@@ -121,8 +121,8 @@ def test_build_applies_plugin_and_counts_it_separately(tmp_path):
                          "--out", str(run), "--sample-every", "1"]) == 0
     assert factory.main(["merge", "--registry", str(reg), "--out", str(run)]) == 0
 
-    from builder import FilterConfig, HashSetIndex, build_shard
-    import registry as registry_mod
+    from shuddhi.builder import FilterConfig, HashSetIndex, build_shard
+    from shuddhi import registry as registry_mod
 
     _meta, accepted, _ = registry_mod.load_registry(str(reg))
     idx = HashSetIndex.from_run_dir(str(run), ["s"])

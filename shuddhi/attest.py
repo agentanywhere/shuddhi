@@ -57,7 +57,7 @@ import time
 
 import numpy as np
 
-import shards as shards_mod
+from . import shards as shards_mod
 
 ATTESTATION_VERSION = 1
 

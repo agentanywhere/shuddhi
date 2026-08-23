@@ -1,4 +1,4 @@
-import pii
+from shuddhi import pii
 
 
 def test_email():

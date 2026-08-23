@@ -3,8 +3,8 @@ import os
 
 import pytest
 
-import tokenizer_lab
-from tokenizer_lab import sample_shard
+from shuddhi import tokenizer_lab
+from shuddhi.tokenizer_lab import sample_shard
 
 DOC = "this is document number {} with some ordinary words repeated for size padding. "
 

@@ -52,7 +52,7 @@ No Docker? `make venv` or `make conda`, then `./scripts/demo.sh`.
 ## See your builds
 
 ```bash
-python3 factory.py ui --dir shuddhi-out/
+shuddhi ui --dir shuddhi-out/
 ```
 
 ![The Shuddhi viewer: receipts, corpus measurements, drops by reason, and the datasets that went in](docs/img/ui.png)
@@ -124,7 +124,7 @@ published on 2025-07-24. Enforcement powers activated 2026-08-02; models placed
 on the market before 2025-08-02 must publish by 2027-08-02.
 
 ```bash
-python factory.py report --eu-ai-act --registry examples/registry.json \
+shuddhi report --eu-ai-act --registry examples/registry.json \
                          --manifest BUILD-MANIFEST.json > article-53.md
 ```
 
@@ -133,8 +133,8 @@ Shuddhi does not compute anything new for this. `source`, `licence`,
 fields — a shard missing any of them is refused, not defaulted — so the summary
 is a projection of what admission already recorded.
 
-Pass the `BUILD-MANIFEST.json` that `factory.py build` writes, not the corpus
-`MANIFEST.json` that `factory.py run` writes: only the first records a filter
+Pass the `BUILD-MANIFEST.json` that `shuddhi build` writes, not the corpus
+`MANIFEST.json` that `shuddhi run` writes: only the first records a filter
 pass. Hand it the wrong one and it says so and marks the fields a **GAP**,
 rather than reporting a retention count nothing measured.
 
@@ -160,7 +160,7 @@ you can hand a regulator, an auditor or a customer that says "this, exactly this
 is what the model saw."
 
 ```bash
-python factory.py attest --corpus ./out-from-datatrove/ --corpus-id fineweb-slice
+shuddhi attest --corpus ./out-from-datatrove/ --corpus-id fineweb-slice
 ```
 
 The fingerprint uses the **same hash definition** a native build uses, so an
@@ -251,7 +251,7 @@ make docker-demo   # the same, inside the container
 Repo layout:
 
 ```
-factory.py            CLI: doctor · check · run · merge · build · build-union
+shuddhi            CLI: doctor · check · run · merge · build · build-union
                            attest · report · plugins · neardup-sig
                            neardup-merge · train-lm · extract
 *.py                  the stages (table above)

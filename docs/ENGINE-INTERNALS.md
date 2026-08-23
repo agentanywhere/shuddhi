@@ -23,10 +23,10 @@ checks — as infrastructure, not one-off scripts.
 | 4 | Quality scoring v1 (heuristics, documented thresholds) | `quality.py` | sampled |
 | 5 | Domain classifier v1 (coding/bfsi/reasoning/indic/general) | `domain.py` | sampled |
 | 6 | Contamination vs our eval sets (8-gram, string-verified) | `contamination.py` + `build_eval_set.py` | sampled |
-| 7 | Build manifest + composition report | `factory.py merge` | — |
+| 7 | Build manifest + composition report | `shuddhi merge` | — |
 | 8 | PII scan/redact (email, phone, Aadhaar, PAN, Luhn-checked cards, IP) | `pii.py` | sampled; full-doc on build |
 | 9 | Perplexity proxy (per-language char-trigram LM, bits/char) | `ngram_lm.py` | sampled; per-doc on build |
-| 10| **Applied-filter builds** with chained hash | `builder.py` / `factory.py build` | full corpus |
+| 10| **Applied-filter builds** with chained hash | `builder.py` / `shuddhi build` | full corpus |
 | 11| **Applied near-dup** (full-corpus MinHash/LSH, disk-backed, deterministic exemplar) | `neardup.py` | full corpus |
 | 12| Toxicity screen (lexicon tier, external lists pluggable + sha-pinned) | `toxicity.py` | per-doc on build |
 | 13| Extraction (HTML → shard text; trafilatura or fallback) | `extract.py` | — |
@@ -34,9 +34,9 @@ checks — as infrastructure, not one-off scripts.
 v1.2 near-dup + toxicity flow:
 
 ```bash
-for s in <shards>; do python3 factory.py neardup-sig --registry R --shard $s --sig-dir sigs/; done
-python3 factory.py neardup-merge --registry R --run-dir out/ --sig-dir sigs/ --out neardup-drop.u64
-python3 factory.py build ... --neardup-drop neardup-drop.u64 --toxicity
+for s in <shards>; do shuddhi neardup-sig --registry R --shard $s --sig-dir sigs/; done
+shuddhi neardup-merge --registry R --run-dir out/ --sig-dir sigs/ --out neardup-drop.u64
+shuddhi build ... --neardup-drop neardup-drop.u64 --toxicity
 ```
 
 **The provenance gate is mechanical.** A shard is refused — before its file
@@ -62,26 +62,26 @@ contract.
 
 ```bash
 # validate the ledger (exit 2 if anything is refused)
-python3 factory.py check --registry configs/reference-sangraha.json
+shuddhi check --registry configs/reference-sangraha.json
 
 # process one shard (all stages, one streaming pass)
-python3 factory.py run --registry configs/reference-sangraha.json \
+shuddhi run --registry configs/reference-sangraha.json \
   --shard sangraha_hin --out out/ \
   --eval-set eval-set.jsonl --fasttext-model lid.176.ftz \
   --tokenizer tokenizer.json
 
 # merge all shard outputs into MANIFEST.json + COMPOSITION.md
-python3 factory.py merge --registry configs/reference-sangraha.json --out out/
+shuddhi merge --registry configs/reference-sangraha.json --out out/
 
 # train per-language perplexity-proxy LMs (once per corpus)
-python3 factory.py train-lm --registry configs/reference-sangraha.json \
+shuddhi train-lm --registry configs/reference-sangraha.json \
   --shard sangraha_hin --lm-dir lms/
 
 # applied-filter build over the MEASURED run (run -> merge -> build):
 # exact-dedup keep-first, quality >= 0.5, per-language ppx cutoff at the
 # measured p99, PII redaction, contamination drop. --emit none produces the
 # hash-only manifest; --emit text also writes the filtered shards.
-python3 factory.py build --registry configs/reference-sangraha.json \
+shuddhi build --registry configs/reference-sangraha.json \
   --run-dir out/ --build-out build/ --lm-dir lms/ --ppx-percentile 99 \
   --pii redact --eval-set eval-set.jsonl --emit none
 ```
@@ -93,7 +93,7 @@ config ⇒ same filtered hash, emission or not. Build also verifies integrity:
 every document hash must exist in the measured run's set, so a shard that
 changed after measurement fails the build loudly.
 
-`run_all.sh` drives all 15 Sangraha shards with 2 workers on the LLM VM
+`scripts/run-reference-corpus.sh` drives all 15 Sangraha shards with 2 workers on the LLM VM
 (CPU-only; the corpus lives there, so no Blob egress is spent).
 
 Dependencies: numpy (required for dedup/merge); `fasttext-predict` (LID,

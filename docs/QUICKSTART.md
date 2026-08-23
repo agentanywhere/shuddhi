@@ -31,7 +31,7 @@ docker build -t shuddhi . && docker run --rm shuddhi doctor
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python3 factory.py doctor
+shuddhi doctor
 ```
 
 ### conda
@@ -39,13 +39,13 @@ python3 factory.py doctor
 ```bash
 conda env create -f environment.yml
 conda activate shuddhi
-python3 factory.py doctor
+shuddhi doctor
 ```
 
 `doctor` prints which interpreter you are on, which packages it can see, and
 exactly what to install if something is missing. **If anything later goes
 wrong, run `doctor` first** — the most common failure by far is running
-`factory.py` with a different Python than the one you installed into.
+`shuddhi` with a different Python than the one you installed into.
 
 `make venv`, `make conda`, and `make docker` wrap the same commands.
 
@@ -102,7 +102,7 @@ One file per language or source is the normal layout — each file is a
 *shard*. If you have HTML instead, convert it first:
 
 ```bash
-python3 factory.py extract --in-dir ./my-html/ --out corpus/mysource.txt
+shuddhi extract --in-dir ./my-html/ --out corpus/mysource.txt
 ```
 
 ### Write a registry
@@ -135,7 +135,7 @@ is anything missing a field. See the [User Guide](USER-GUIDE.md#3-the-registry-a
 for every field and rule.
 
 ```bash
-python3 factory.py check --registry my-registry.json
+shuddhi check --registry my-registry.json
 ```
 
 Fix whatever it refuses before going further. (It exits non-zero when
@@ -144,7 +144,7 @@ anything is refused — that is intentional, so CI can gate on it.)
 ### Run it — one command
 
 ```bash
-python3 factory.py pipeline --registry my-registry.json --out shuddhi-out/
+shuddhi pipeline --registry my-registry.json --out shuddhi-out/
 ```
 
 That is the whole pipeline: language models, measurement, corpus manifest,
@@ -173,22 +173,22 @@ REG=my-registry.json
 
 # optional but recommended: language models for the perplexity filter.
 # Train these BEFORE measuring, so the measurement records a distribution.
-python3 factory.py train-lm --registry $REG --shard news_eng --lm-dir lms/
+shuddhi train-lm --registry $REG --shard news_eng --lm-dir lms/
 
 # measure every shard (repeat per shard; these can run in parallel)
-python3 factory.py run --registry $REG --shard news_eng --out run/ \
+shuddhi run --registry $REG --shard news_eng --out run/ \
     --lm lms/eng.lm.gz --pii-scan
 
 # mint the corpus build hash
-python3 factory.py merge --registry $REG --out run/
+shuddhi merge --registry $REG --out run/
 
 # near-duplicate clustering across the whole corpus
-python3 factory.py neardup-sig --registry $REG --shard news_eng --sig-dir sigs/
-python3 factory.py neardup-merge --registry $REG --run-dir run/ \
+shuddhi neardup-sig --registry $REG --shard news_eng --sig-dir sigs/
+shuddhi neardup-merge --registry $REG --run-dir run/ \
     --sig-dir sigs/ --out neardup-drop.u64
 
 # apply the filters and write the cleaned corpus
-python3 factory.py build --registry $REG --run-dir run/ --build-out build/ \
+shuddhi build --registry $REG --run-dir run/ --build-out build/ \
     --lm-dir lms/ --neardup-drop neardup-drop.u64 \
     --toxicity --pii redact --emit text
 ```

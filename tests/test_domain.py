@@ -1,4 +1,4 @@
-import domain
+from shuddhi import domain
 
 CODE = """
 import os
