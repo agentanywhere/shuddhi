@@ -72,7 +72,10 @@ def extract_dir(in_dir: str, out_path: str, min_chars: int = 80) -> dict:
     kept = 0
     skipped_short = 0
     extractors: set[str] = set()
-    with open(out_path, "w", encoding="utf-8") as out:
+    # newline="" keeps Python from translating "\n" to "\r\n" on Windows:
+    # a corpus written with CRLF is one this tool's own reader would have to
+    # normalise back, and the file should be identical on every platform.
+    with open(out_path, "w", encoding="utf-8", newline="") as out:
         for fn in files:
             with open(os.path.join(in_dir, fn), encoding="utf-8", errors="replace") as f:
                 html = f.read()
