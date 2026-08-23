@@ -10,8 +10,8 @@ the *mechanics* are the lesson rather than the filtering logic:
 Install and use:
 
     pip install -e examples/plugin
-    python3 factory.py plugins
-    python3 factory.py build ... --plugin example-min-words
+    shuddhi plugins
+    shuddhi build ... --plugin example-min-words
 """
 
 from __future__ import annotations

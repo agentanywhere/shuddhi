@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-import factory
+from shuddhi import cli as factory
 
 # long enough to clear the short-doc quality cap (>200 chars)
 GOOD = (

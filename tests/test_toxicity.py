@@ -1,4 +1,4 @@
-from toxicity import ToxicityLexicon
+from shuddhi.toxicity import ToxicityLexicon
 
 CLEAN_EN = (
     "The monsoon arrived early this year across the western coast and farmers "

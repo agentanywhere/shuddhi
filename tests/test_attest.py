@@ -9,7 +9,7 @@ attestation at all — it would launder unknown data through our receipt.
 import json
 import os
 
-import attest
+from shuddhi import attest
 
 
 def _corpus(tmp_path, files: dict[str, str]) -> str:
@@ -59,7 +59,7 @@ def test_hash_matches_the_native_build_definition(tmp_path):
 
     import numpy as np
 
-    import shards as shards_mod
+    from shuddhi import shards as shards_mod
 
     root = _corpus(tmp_path, DOCS)
     att = attest.attest_corpus(root, "c")

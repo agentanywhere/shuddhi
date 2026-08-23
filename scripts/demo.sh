@@ -17,40 +17,40 @@ REG=examples/registry.json
 rule() { printf '\n\033[1m── %s\033[0m\n' "$1"; }
 
 rule "0. environment"
-"$PY" factory.py doctor
+"$PY" -m shuddhi doctor
 
 rm -rf "$W"; mkdir -p "$W"
 
 rule "1. provenance gate — check the registry before reading any data"
 echo "   (customer_export is tagged data_class 'customer': it must be refused)"
-"$PY" factory.py check --registry "$REG" || true
+"$PY" -m shuddhi check --registry "$REG" || true
 
 rule "2. per-language perplexity models (train BEFORE measuring, so the"
 echo "   measurement records a bits/char distribution the build can threshold on)"
 for s in sample_eng sample_hin; do
-  "$PY" factory.py train-lm --registry "$REG" --shard "$s" --lm-dir "$W/lms" --sample-every 1
+  "$PY" -m shuddhi train-lm --registry "$REG" --shard "$s" --lm-dir "$W/lms" --sample-every 1
 done
 
 rule "3. measure each accepted shard"
 for s in sample_eng sample_hin; do
   lang=eng; [ "$s" = "sample_hin" ] && lang=hin
-  "$PY" factory.py run --registry "$REG" --shard "$s" --out "$W/run" \
+  "$PY" -m shuddhi run --registry "$REG" --shard "$s" --out "$W/run" \
       --sample-every 1 --eval-set examples/eval-set.jsonl --pii-scan \
       --lm "$W/lms/$lang.lm.gz"
 done
 
 rule "4. merge into a corpus manifest (this mints the corpus build hash)"
-"$PY" factory.py merge --registry "$REG" --out "$W/run"
+"$PY" -m shuddhi merge --registry "$REG" --out "$W/run"
 
 rule "5. near-duplicate clustering across the whole corpus"
 for s in sample_eng sample_hin; do
-  "$PY" factory.py neardup-sig --registry "$REG" --shard "$s" --sig-dir "$W/sigs"
+  "$PY" -m shuddhi neardup-sig --registry "$REG" --shard "$s" --sig-dir "$W/sigs"
 done
-"$PY" factory.py neardup-merge --registry "$REG" --run-dir "$W/run" \
+"$PY" -m shuddhi neardup-merge --registry "$REG" --run-dir "$W/run" \
     --sig-dir "$W/sigs" --out "$W/neardup-drop.u64"
 
 rule "6. filtered build — every filter on, PII redacted, text emitted"
-"$PY" factory.py build --registry "$REG" --run-dir "$W/run" --build-out "$W/build" \
+"$PY" -m shuddhi build --registry "$REG" --run-dir "$W/run" --build-out "$W/build" \
     --lm-dir "$W/lms" --ppx-percentile 99 \
     --neardup-drop "$W/neardup-drop.u64" \
     --toxicity --toxicity-lexicon-dir examples/lexicon \

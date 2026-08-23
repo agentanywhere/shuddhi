@@ -3,7 +3,7 @@
 Drop-in configurations for gating a data pipeline on Shuddhi. They all do the
 same two things, because those are the two things worth automating:
 
-1. **Gate the registry.** `factory.py check` exits non-zero when any shard is
+1. **Gate the registry.** `shuddhi check` exits non-zero when any shard is
    untagged or carries a customer data class. Run it on every pull request
    and an unreviewed dataset cannot merge — the rule is enforced by the
    pipeline instead of by someone remembering.

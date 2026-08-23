@@ -1,6 +1,6 @@
 import hashlib
 
-import shards
+from shuddhi import shards
 
 
 def write(tmp_path, blob: bytes):

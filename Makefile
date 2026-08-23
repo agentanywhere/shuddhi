@@ -11,14 +11,14 @@ help:  ## show this help
 	  | awk -F':.*?## ' '{printf "  \033[1m%-14s\033[0m %s\n", $$1, $$2}'
 
 doctor:  ## check whether the current interpreter can run the pipeline
-	@$(PYTHON) factory.py doctor
+	@$(PYTHON) -m shuddhi doctor
 
 venv:  ## create a virtualenv in ./.venv and install everything
 	$(PYTHON) -m venv $(VENV)
 	$(VENV)/bin/pip install --quiet --upgrade pip
 	$(VENV)/bin/pip install --quiet -r requirements.txt
 	@echo
-	@$(VENV)/bin/python factory.py doctor
+	@$(VENV)/bin/python -m shuddhi doctor
 	@echo "\nActivate it with:  source $(VENV)/bin/activate"
 
 conda:  ## create the 'shuddhi' conda environment
@@ -42,4 +42,4 @@ fetch-lid:  ## download the fastText lid.176 language-ID model (~1 MB)
 	@echo "Downloaded lid.176.ftz — pass it with --fasttext-model lid.176.ftz"
 
 clean:  ## remove generated artefacts (never touches your corpora)
-	rm -rf demo-out out build sigs lms .pytest_cache **/__pycache__ __pycache__
+	rm -rf demo-out out build sigs lms .pytest_cache **/__pycache__ __pycache__ *.egg-info

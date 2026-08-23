@@ -9,7 +9,7 @@ provenance-gate:
   image: $SHUDDHI_IMAGE
   script:
     # The image entrypoint is the CLI, so override it for a raw command.
-    - python /app/factory.py check --registry registry.json
+    - shuddhi check --registry registry.json
   rules:
     - if: $CI_PIPELINE_SOURCE == "merge_request_event"
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -19,7 +19,7 @@ corpus-build:
   image: $SHUDDHI_IMAGE
   needs: [provenance-gate]
   script:
-    - python /app/factory.py pipeline --registry registry.json --out shuddhi-out --emit none
+    - shuddhi pipeline --registry registry.json --out shuddhi-out --emit none
     - python -c "import json;m=json.load(open('shuddhi-out/build/BUILD-MANIFEST.json'));print('filtered_build_hash',m['filtered_build_hash'])"
   artifacts:
     name: corpus-receipt-$CI_COMMIT_SHORT_SHA

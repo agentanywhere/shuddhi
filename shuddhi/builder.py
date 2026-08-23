@@ -36,9 +36,9 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
-import pii as pii_mod
-import quality as quality_mod
-import shards as shards_mod
+from . import pii as pii_mod
+from . import quality as quality_mod
+from . import shards as shards_mod
 
 DROP_REASONS = ("exact_dup", "near_dup", "quality", "perplexity", "toxicity",
                 "contamination", "pii")
@@ -64,7 +64,7 @@ class FilterConfig:
     def canonical(self) -> str:
         # scorer probe sizes are part of the config identity: the same
         # thresholds with different probes are a different filter
-        import ngram_lm
+        from . import ngram_lm
 
         return json.dumps(
             {

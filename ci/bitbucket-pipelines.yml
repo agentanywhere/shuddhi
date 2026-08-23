@@ -7,16 +7,16 @@ pipelines:
       - step:
           name: Provenance gate
           script:
-            - python /app/factory.py check --registry registry.json
+            - shuddhi check --registry registry.json
   branches:
     main:
       - step:
           name: Provenance gate
           script:
-            - python /app/factory.py check --registry registry.json
+            - shuddhi check --registry registry.json
       - step:
           name: Build the corpus
           script:
-            - python /app/factory.py pipeline --registry registry.json --out shuddhi-out --emit none
+            - shuddhi pipeline --registry registry.json --out shuddhi-out --emit none
           artifacts:
             - shuddhi-out/**

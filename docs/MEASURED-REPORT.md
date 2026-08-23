@@ -156,10 +156,10 @@ other way round. Marginal cost: effectively the machine's idle time.
 ## Reusing the engine (any future corpus)
 
 ```bash
-python3 factory.py check --registry <registry.json>       # provenance gate
-python3 factory.py run --registry <registry.json> --shard <id> --out out/ \
+shuddhi check --registry <registry.json>       # provenance gate
+shuddhi run --registry <registry.json> --shard <id> --out out/ \
     --eval-set eval-set.jsonl --fasttext-model lid.176.ftz --tokenizer tokenizer.json
-python3 factory.py merge --registry <registry.json> --out out/   # manifest
+shuddhi merge --registry <registry.json> --out out/   # manifest
 ```
 
 A registry entry needs source / license / date / data_class / language.

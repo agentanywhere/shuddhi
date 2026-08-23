@@ -30,7 +30,7 @@ review bar is about correctness and honesty more than style.
 git clone <repo> && cd shuddhi
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-python3 factory.py doctor      # confirms the environment
+shuddhi doctor      # confirms the environment
 python3 -m pytest tests/ -q    # 111 tests, seconds, no network
 ./scripts/demo.sh              # end-to-end on the sample corpus
 ```
@@ -72,7 +72,7 @@ assignment.
 Include `run/<shard>.stats.json` and `build/BUILD-MANIFEST.json` if you have
 them — they record the engine version, Python version, library versions, and
 every threshold used, which usually identifies the problem immediately. Also
-include `factory.py doctor` output.
+include `shuddhi doctor` output.
 
 For anything security-sensitive, see [SECURITY.md](SECURITY.md) instead of
 opening an issue.

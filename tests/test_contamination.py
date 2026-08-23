@@ -1,4 +1,4 @@
-from contamination import EvalSetIndex, normalize_words
+from shuddhi.contamination import EvalSetIndex, normalize_words
 
 EVAL_PROMPT = (
     "There is a bug in src/orders.js. findOrder crashes with a TypeError when "
