@@ -294,7 +294,10 @@ def cmd_doctor(args) -> int:
             m = __import__(mod)
             print(f"  [{ok('ok')}]      {mod} {getattr(m, '__version__', '')} — {dim(why)}")
         except ImportError:
-            print(f"  [{dim('absent')}]  {mod} — {why}  {dim(f"(optional: pip install '.[{extra}]')")}")
+            # Nested f-strings only became legal in 3.12; this project
+            # supports 3.10, so build the inner string first.
+            extra_hint = dim(f"(optional: pip install '.[{extra}]')")
+            print(f"  [{dim('absent')}]  {mod} — {why}  {extra_hint}")
 
     print("optional data files (fetch or supply your own)")
     for path, why in (

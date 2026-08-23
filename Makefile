@@ -4,7 +4,7 @@ VENV   ?= .venv
 IMAGE  ?= shuddhi:latest
 
 .DEFAULT_GOAL := help
-.PHONY: help doctor venv conda test demo docker docker-demo fetch-lid clean
+.PHONY: help doctor venv conda test compat demo docker docker-demo fetch-lid clean
 
 help:  ## show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -24,6 +24,13 @@ venv:  ## create a virtualenv in ./.venv and install everything
 conda:  ## create the 'shuddhi' conda environment
 	conda env create -f environment.yml || conda env update -f environment.yml
 	@echo "\nActivate it with:  conda activate shuddhi"
+
+compat:  ## run the suite on the OLDEST supported Python (3.10) via Docker
+	@# Developing on 3.12 hides syntax that 3.10 rejects — a nested f-string
+	@# shipped once and only CI caught it. This is the same check, locally.
+	docker run --rm -v "$(PWD):/src" -w /src python:3.10-slim sh -c \
+	  "pip install -q -r requirements.txt && pip install -q -e . && \
+	   python -m pytest tests/ -q --ignore=tests/test_ui_playwright.py"
 
 test:  ## run the test suite
 	$(PYTHON) -m pytest tests/ -q
