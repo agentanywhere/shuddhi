@@ -107,14 +107,18 @@ shuddhi extract --in-dir ./my-html/ --out corpus/news_eng.txt
 ### A registry
 
 The registry is the doorway: every shard declares where it came from, and
-nothing enters without one. Start from the bundled example rather than
-typing one out:
+nothing enters without one. Scaffold it from the files you actually have:
 
 ```bash
-cp examples/registry.json my-registry.json
+shuddhi init --corpus ./corpus --out my-registry.json
 ```
 
-Then edit it. It should end up looking like this:
+That writes one entry per text file, with the provenance fields left
+**empty on purpose** — an empty field is refused, and `check` names exactly
+which ones are missing. So a scaffold cannot become a corpus until someone
+has said where the data came from.
+
+Fill them in until it looks like this:
 
 ```json
 {

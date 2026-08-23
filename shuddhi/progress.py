@@ -45,6 +45,30 @@ def _supports_unicode(stream) -> bool:
     return "utf" in enc
 
 
+def paint(text: str, colour: str, stream=None) -> str:
+    """Colour `text` when the destination can show it, otherwise return it
+    unchanged. Honours NO_COLOR and TERM=dumb, and never colours a pipe —
+    escape codes in a log file or a CI transcript are noise."""
+    stream = stream or sys.stdout
+    return f"{colour}{text}{_RESET}" if _supports_colour(stream) else text
+
+
+def ok(text: str, stream=None) -> str:
+    return paint(text, _GREEN, stream)
+
+
+def bad(text: str, stream=None) -> str:
+    return paint(text, _RED, stream)
+
+
+def warn(text: str, stream=None) -> str:
+    return paint(text, _YELLOW, stream)
+
+
+def dim(text: str, stream=None) -> str:
+    return paint(text, _DIM, stream)
+
+
 def human(n: float) -> str:
     """Bytes in units a person reads without counting digits."""
     for unit in ("B", "KB", "MB", "GB", "TB"):

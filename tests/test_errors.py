@@ -115,3 +115,38 @@ def test_unexpected_exceptions_are_not_swallowed(exc):
     """An unrecognised exception is a BUG. Hiding it would waste the only
     report we get about it."""
     assert _explain(exc) is None
+
+
+def test_colour_is_suppressed_when_output_is_not_a_terminal(capsys):
+    """Escape codes in a pipe, a log file or a CI transcript are noise."""
+    from shuddhi.progress import bad, dim, ok, warn
+
+    for fn in (ok, bad, warn, dim):
+        painted = fn("text")
+        assert painted == "text", f"{fn.__name__} coloured a non-tty stream"
+
+
+def test_no_color_env_is_honoured(monkeypatch):
+    import io
+
+    from shuddhi.progress import ok
+
+    class FakeTty(io.StringIO):
+        def isatty(self):
+            return True
+
+    monkeypatch.setenv("TERM", "xterm-256color")
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    assert "\033[" in ok("x", FakeTty()), "expected colour on a tty"
+
+    monkeypatch.setenv("NO_COLOR", "1")
+    assert ok("x", FakeTty()) == "x", "NO_COLOR must win"
+
+
+def test_doctor_runs_and_reports(capsys):
+    """Regression: cmd_doctor had a local named `ok` that shadowed the
+    colour helper of the same name, so importing colour broke doctor."""
+    rc = factory.main(["doctor"])
+    out = capsys.readouterr().out
+    assert rc in (0, 1)
+    assert "python" in out and ("READY" in out or "NOT READY" in out)

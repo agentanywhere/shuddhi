@@ -82,14 +82,19 @@ processes on a laptop.
 
 ## 3. The registry and the provenance gate
 
-The fastest way to a valid registry is to copy the one that ships with the
-repository and edit it:
+Scaffold one from the files you have, rather than writing it by hand:
 
 ```bash
-cp examples/registry.json my-registry.json
+shuddhi init --corpus ./corpus --out my-registry.json
 ```
 
-It looks like this:
+`init` writes an entry per text file and guesses a language from a filename
+suffix like `news_eng.txt`, but leaves every provenance field **empty on
+purpose**: empty fields are refused, and `check` names them. The scaffold
+cannot become a corpus until a human states the provenance — the gate
+teaches itself rather than needing to be explained.
+
+Filled in, a registry looks like this:
 
 ```json
 {

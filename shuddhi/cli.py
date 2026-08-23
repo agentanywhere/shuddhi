@@ -51,7 +51,7 @@ from . import registry as registry_mod
 from . import shards as shards_mod
 from .errors import UserError
 from .lid import make_lid
-from .progress import Reporter, human
+from .progress import Reporter, bad, dim, human, ok, warn
 
 FACTORY_VERSION = "1.2.0"
 
@@ -250,11 +250,11 @@ def cmd_doctor(args) -> int:
     missing. Exists because the most common failure by far is running
     factory.py with a different Python than the one the dependencies were
     installed into (system python vs venv vs conda)."""
-    ok = True
+    ready = True
     print(f"python      {platform.python_version()}  ({sys.executable})")
     if sys.version_info < (3, 10):
         print("            ERROR: Python 3.10 or newer is required")
-        ok = False
+        ready = False
 
     # sys.prefix differs from base_prefix inside ANY virtual environment,
     # whether or not it was "activated" — running .venv/bin/python directly
@@ -283,32 +283,107 @@ def cmd_doctor(args) -> int:
     for mod, why in required:
         try:
             m = __import__(mod)
-            print(f"  [ok]      {mod} {getattr(m, '__version__', '')} — {why}")
+            print(f"  [{ok('ok')}]      {mod} {getattr(m, '__version__', '')} — {dim(why)}")
         except ImportError:
-            print(f"  [MISSING] {mod} — {why}  (REQUIRED)")
-            ok = False
+            print(f"  [{bad('MISSING')}] {mod} — {why}  {bad('(REQUIRED)')}")
+            ready = False
     for mod, why, extra in optional:
         try:
             m = __import__(mod)
-            print(f"  [ok]      {mod} {getattr(m, '__version__', '')} — {why}")
+            print(f"  [{ok('ok')}]      {mod} {getattr(m, '__version__', '')} — {dim(why)}")
         except ImportError:
-            print(f"  [absent]  {mod} — {why}  (optional: pip install '.[{extra}]')")
+            print(f"  [{dim('absent')}]  {mod} — {why}  {dim(f"(optional: pip install '.[{extra}]')")}")
 
     print("optional data files (fetch or supply your own)")
     for path, why in (
         ("lid.176.ftz", "fastText language-ID model — `make fetch-lid`"),
         ("examples/eval-set.jsonl", "example eval set for contamination screening"),
     ):
-        print(f"  [{'ok' if os.path.exists(path) else '--'}]      {path} — {why}"
+        print(f"  [{ok('ok')}]      {path} — {dim(why)}"
               if os.path.exists(path)
-              else f"  [absent]  {path} — {why}")
+              else f"  [{dim('absent')}]  {path} — {why}")
 
-    if ok:
-        print("\nREADY — the pipeline can run in this environment.")
+    if ready:
+        print(f"\n{ok('READY')} — the pipeline can run in this environment.")
     else:
-        print("\nNOT READY — install the missing REQUIRED packages into THIS "
+        print(f"\n{bad('NOT READY')} — install the missing REQUIRED packages into THIS "
               f"interpreter:\n    {sys.executable} -m pip install -e '.[lid,tokens,extract,dev]'")
-    return 0 if ok else 1
+    return 0 if ready else 1
+
+
+def cmd_init(args) -> int:
+    """Scaffold a registry from a directory of text files.
+
+    Copying the example registry means deleting somebody else's shards
+    before you can describe your own. This writes one entry per file you
+    actually have, with the provenance fields left EMPTY on purpose: an
+    empty field is refused by `check`, with the missing fields named. So
+    the scaffold cannot become a corpus until a human has said where the
+    data came from — the gate teaches itself instead of being explained.
+    """
+    corpus = args.corpus
+    if not os.path.isdir(corpus):
+        raise UserError(f"not a directory: {corpus}",
+                        "Point --corpus at the folder holding your .txt shards.")
+
+    files = sorted(
+        fn for fn in os.listdir(corpus)
+        if fn.lower().endswith((".txt", ".jsonl")) and
+        os.path.isfile(os.path.join(corpus, fn))
+    )
+    if not files:
+        raise UserError(
+            f"no .txt files in {corpus}",
+            "Shuddhi reads plain UTF-8 text with a blank line between "
+            "documents. Have HTML instead?\n"
+            "    shuddhi extract --in-dir ./html/ --out corpus/source.txt")
+
+    if os.path.exists(args.out) and not args.force:
+        raise UserError(f"{args.out} already exists",
+                        "Pass --force to overwrite it.")
+
+    shards = []
+    for fn in files:
+        stem = os.path.splitext(fn)[0]
+        # A trailing language code in the filename is a common convention
+        # (news_eng.txt); use it as a suggestion, never as a fact.
+        tail = stem.rsplit("_", 1)[-1].lower() if "_" in stem else ""
+        language = tail if (args.language is None and len(tail) == 3) else (args.language or "")
+        shards.append({
+            "shard_id": stem,
+            "path": os.path.join(corpus, fn),
+            "source": "",
+            "license": "",
+            "date_acquired": "",
+            "data_class": "",
+            "language": language,
+        })
+
+    doc = {
+        "registry_version": 1,
+        "corpus_id": args.corpus_id or os.path.basename(os.path.abspath(corpus)),
+        "_comment": (
+            "Fill in every empty field before this registry will be accepted. "
+            "source: where the data came from. license: the licence you hold. "
+            "date_acquired: ISO date. data_class: public | licensed | "
+            "synthetic-own — anything customer-derived is refused and cannot "
+            "be overridden. language: ISO 639-3 code. Paths are resolved from "
+            "the directory you run Shuddhi in."
+        ),
+        "shards": shards,
+    }
+    with open(args.out, "w", encoding="utf-8") as f:
+        json.dump(doc, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+    print(f"wrote {args.out} — {len(shards)} shard(s) from {corpus}")
+    blank = sum(1 for sh in shards for k in ("source", "license", "date_acquired",
+                                             "data_class") if not sh[k])
+    print(f"\n{blank} fields are empty and deliberately so: a shard is refused "
+          f"until you say where it came from.")
+    print("Fill them in, then:")
+    print(f"    shuddhi check --registry {args.out}")
+    return 0
 
 
 def cmd_check(args) -> int:
@@ -326,24 +401,27 @@ def cmd_check(args) -> int:
             missing.append(s)
         elif os.path.isfile(s.path) and os.path.getsize(s.path) == 0:
             empty.append(s)
-        print(f"  ✓ {s.shard_id:<16} {s.data_class:<9} {s.license:<12} {s.source}")
+        print(f"  {ok('✓')} {s.shard_id:<16} {s.data_class:<9} "
+              f"{s.license:<12} {dim(s.source)}")
 
     print(f"refused: {len(refused)}")
     for r in refused:
-        print(f"  ✗ {r.shard_id}: {r.reason}")
+        print(f"  {bad('✗')} {bad(r.shard_id)}: {r.reason}")
 
     if missing:
         print(f"\nunreadable: {len(missing)}", file=sys.stderr)
         for s in missing:
-            print(f"  ! {s.shard_id}: no such file: {s.path}", file=sys.stderr)
+            print(f"  {warn('!', sys.stderr)} {s.shard_id}: no such file: {s.path}",
+                  file=sys.stderr)
         print("\nPaths are resolved from the directory you run Shuddhi in, "
               "not from the registry's own location.", file=sys.stderr)
     for s in empty:
-        print(f"  ! {s.shard_id}: file is empty: {s.path}", file=sys.stderr)
+        print(f"  {warn('!', sys.stderr)} {s.shard_id}: file is empty: {s.path}",
+              file=sys.stderr)
 
     if refused or missing or empty:
         return 2
-    print("\nEvery shard is admissible and readable.")
+    print(f"\n{ok('Every shard is admissible and readable.')}")
     return 0
 
 
@@ -1369,6 +1447,16 @@ def main(argv=None) -> int:
     p.add_argument("--allow-refusals", action="store_true",
                    help="proceed with the accepted shards when the registry has refusals")
     p.set_defaults(fn=cmd_pipeline)
+
+    p = sub.add_parser("init", help="scaffold a registry from a folder of text files")
+    p.add_argument("--corpus", required=True, help="directory holding your .txt shards")
+    p.add_argument("--out", default="registry.json")
+    p.add_argument("--corpus-id", default="", help="defaults to the folder name")
+    p.add_argument("--language", default=None,
+                   help="ISO 639-3 code for every shard; otherwise guessed from "
+                        "a filename suffix like news_eng.txt, else left empty")
+    p.add_argument("--force", action="store_true", help="overwrite an existing file")
+    p.set_defaults(fn=cmd_init)
 
     p = sub.add_parser("check", help="validate a shard registry")
     p.add_argument("--registry", required=True)
