@@ -2,7 +2,23 @@
 
 Notable changes to Shuddhi. Dates are release dates.
 
-## Unreleased
+## 1.2.0 — 2026-08-24
+
+First public release. The notes below cover everything through launch.
+
+**Late fixes and additions**
+
+- `--log-drops` on `build`/`pipeline` writes `dropped.jsonl`: one line per
+  dropped document, with the reason recorded at the decision point.
+- PII: added IBAN detection, validated by its ISO 13616 mod-97 check digits;
+  the detector list now leads with region-neutral patterns (email, IBAN,
+  Luhn cards, IP) with India-specific phone/Aadhaar/PAN alongside.
+- Corrected a receipts claim: `filtered_build_hash` is a content hash of the
+  selected documents and is **not** chained to `filter_config_sha256` (the
+  config sha is recorded beside it). The docs said otherwise in six places,
+  including the generated EU AI Act summary.
+- The provenance gate's real limit is now stated plainly: it enforces the
+  declared `data_class`, and is not a content classifier.
 
 **Fixed — shards with Windows line endings were read as a single document.**
 The record separator is a blank line, which CRLF writes as `\r\n\r\n`; that
@@ -22,10 +38,6 @@ Two consequences worth knowing:
   raw file bytes.
 
 Found by adding Windows to the CI matrix instead of assuming it worked.
-
-## 1.2.0 — 2026-08-13
-
-First public release.
 
 **Receipts**
 - `corpus_build_hash`: order-independent content hash of the accepted
