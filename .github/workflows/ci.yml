@@ -16,8 +16,12 @@ jobs:
         os: [ubuntu-latest]
         python: ["3.10", "3.11", "3.12", "3.13"]
         include:
-          # the pipeline is meant to run anywhere; prove it on macOS too
+          # the pipeline is meant to run anywhere; prove it rather than
+          # claim it. Windows is here because we had no evidence either
+          # way, and "untested" is not the same as "works".
           - os: macos-latest
+            python: "3.12"
+          - os: windows-latest
             python: "3.12"
     steps:
       - uses: actions/checkout@v5
