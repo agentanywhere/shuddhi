@@ -314,8 +314,13 @@ Two requirements, both easy to get wrong:
 1. Train the models **before** measuring, and pass `--lm` to `run`, so the
    distribution exists. Otherwise `build` has no cutoff and the filter does
    nothing (it warns loudly).
-2. Percentiles need scale. On a few dozen documents, p99 sits at the worst
-   document and the filter is meaningless — as the demo corpus shows.
+2. Percentiles need scale, and the engine enforces it. If fewer than 200
+   documents were scored during measurement, the filter **switches itself
+   off** and says so on stderr rather than thresholding against noise —
+   without that guard, a stride that sampled one document made p99 equal
+   that document and dropped 33 of 42. Override deliberately with
+   `--min-ppx-sample` when you know the sample is small and you want it
+   anyway; the bundled demo does exactly that, and says why.
 
 ### Toxicity (`--toxicity`)
 

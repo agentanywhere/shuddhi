@@ -50,8 +50,12 @@ done
     --sig-dir "$W/sigs" --out "$W/neardup-drop.u64"
 
 rule "6. filtered build — every filter on, PII redacted, text emitted"
+echo "   (--min-ppx-sample 2: this sample corpus has 31 and 11 documents, far"
+echo "    below the 200 a percentile needs to mean anything. Lowered HERE so you"
+echo "    can watch the filter work; on a real corpus leave the default alone.)"
 "$PY" -m shuddhi build --registry "$REG" --run-dir "$W/run" --build-out "$W/build" \
     --lm-dir "$W/lms" --ppx-percentile 99 \
+    --min-ppx-sample 2 \
     --neardup-drop "$W/neardup-drop.u64" \
     --toxicity --toxicity-lexicon-dir examples/lexicon \
     --pii redact --eval-set examples/eval-set.jsonl \

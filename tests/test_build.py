@@ -130,9 +130,11 @@ def test_ppx_filter_via_lm(tmp_path):
                          "--lm", str(lm_dir / "eng.lm.gz")]) == 0
     assert factory.main(["merge", "--registry", reg_path, "--out", str(run_dir)]) == 0
     out = tmp_path / "b"
+    # --min-ppx-sample: this fixture is deliberately tiny, and the default
+    # guard (200 scored documents) would switch the filter off.
     assert factory.main(["build", "--registry", reg_path, "--run-dir", str(run_dir),
                          "--build-out", str(out), "--lm-dir", str(lm_dir),
-                         "--ppx-percentile", "99"]) == 0
+                         "--ppx-percentile", "99", "--min-ppx-sample", "2"]) == 0
     bm = json.loads((out / "BUILD-MANIFEST.json").read_text())
     assert bm["dropped_by_reason"]["perplexity"] >= 1
     assert "eng" in bm["filter_config"]["max_bits_per_char"]
@@ -232,7 +234,8 @@ def test_partition_configs_are_invariant_with_lm_cutoffs(tmp_path):
 
     seq, pa, pb, un = (tmp_path / n for n in ("seq", "pa", "pb", "un"))
     common = ["--registry", str(reg_path), "--run-dir", str(run_dir),
-              "--lm-dir", str(lm_dir), "--ppx-percentile", "99"]
+              "--lm-dir", str(lm_dir), "--ppx-percentile", "99",
+              "--min-ppx-sample", "2"]
     assert factory.main(["build", *common, "--build-out", str(seq)]) == 0
     assert factory.main(["build", *common, "--build-out", str(pa), "--shards", "a"]) == 0
     assert factory.main(["build", *common, "--build-out", str(pb), "--shards", "b"]) == 0
@@ -312,3 +315,35 @@ def test_healthy_build_has_no_warnings(tmp_path):
     bm = json.loads((out / "BUILD-MANIFEST.json").read_text())
     assert bm["kept_docs"] > 0
     assert bm["warnings"] == []
+
+
+def test_a_thin_perplexity_sample_disables_the_filter(tmp_path, capsys):
+    """Found by walking the quickstart: the default stride meant ONE
+    document was scored, so p99 was that document and the filter dropped 33
+    of 42. A percentile from a handful of samples is not a threshold."""
+    docs = [GOOD + f"number {i}" for i in range(40)]
+    shard = tmp_path / "s.txt"
+    shard.write_text("\n\n".join(docs) + "\n\n", encoding="utf-8")
+    reg = tmp_path / "r.json"
+    reg.write_text(json.dumps({
+        "registry_version": 1, "corpus_id": "thin",
+        "shards": [{"shard_id": "s", "path": str(shard), "source": "fixture",
+                    "license": "CC0-1.0", "date_acquired": "2026-08-23",
+                    "data_class": "synthetic-own", "language": "eng"}],
+    }))
+    lm_dir, run_dir = tmp_path / "lms", tmp_path / "run"
+    factory.main(["train-lm", "--registry", str(reg), "--shard", "s",
+                  "--lm-dir", str(lm_dir), "--sample-every", "1"])
+    # stride 20 over 40 documents scores only 2 — far too few to threshold
+    factory.main(["run", "--registry", str(reg), "--shard", "s", "--out", str(run_dir),
+                  "--sample-every", "20", "--lm", str(lm_dir / "eng.lm.gz")])
+    factory.main(["merge", "--registry", str(reg), "--out", str(run_dir)])
+
+    out = tmp_path / "b"
+    assert factory.main(["build", "--registry", str(reg), "--run-dir", str(run_dir),
+                         "--build-out", str(out), "--lm-dir", str(lm_dir)]) == 0
+    bm = json.loads((out / "BUILD-MANIFEST.json").read_text())
+    assert bm["dropped_by_reason"]["perplexity"] == 0, \
+        "a filter with no usable distribution must drop nothing"
+    assert bm["filter_config"]["max_bits_per_char"] == {}
+    assert "perplexity filter is OFF" in capsys.readouterr().err

@@ -137,6 +137,33 @@ def load_run(path: str) -> dict:
     return {"corpus": corpus, "build": build, "events": events, "downloads": downloads}
 
 
+def _diagnose_empty(root: str) -> dict:
+    """Explain why nothing was found, instead of showing an empty box.
+
+    A viewer that says "no builds" and stops is useless precisely when the
+    user most needs help: they ran a pipeline, they are looking at the
+    directory, and the screen disagrees with them.
+    """
+    exists = os.path.isdir(root)
+    entries = sorted(os.listdir(root))[:40] if exists else []
+    subdirs = [d for d in entries if os.path.isdir(os.path.join(root, d))]
+    return {
+        "exists": exists,
+        "entries": entries,
+        "looked_for": [MANIFEST.replace(os.sep, "/"),
+                       BUILD_MANIFEST.replace(os.sep, "/"),
+                       "events.jsonl"],
+        "subdirs": subdirs,
+        "hint": (
+            "This directory exists but holds none of the files a build "
+            "leaves behind. Point --dir at the directory you passed to "
+            "--out (or its parent), and check the pipeline actually "
+            "finished."
+            if exists else f"{root} does not exist."
+        ),
+    }
+
+
 class Handler(BaseHTTPRequestHandler):
     root = "."
 
@@ -164,7 +191,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._send(PAGE.encode(), "text/html; charset=utf-8")
 
         if route == "/api/runs":
-            return self._json({"root": self.root, "runs": discover_runs(self.root)})
+            runs = discover_runs(self.root)
+            payload = {"root": self.root, "runs": runs}
+            if not runs:
+                payload["diagnosis"] = _diagnose_empty(self.root)
+            return self._json(payload)
 
         if route.startswith("/api/run/"):
             rel = route[len("/api/run/"):]
@@ -295,14 +326,30 @@ async function loadRuns(){
   const d=await (await fetch("/api/runs")).json();
   $("#root").textContent=d.root;
   runsCache=d.runs;
-  $("#runs").innerHTML = d.runs.length? d.runs.map(r=>`
+  if(!d.runs.length){
+    const g=d.diagnosis||{};
+    $("#runs").innerHTML='<div class=empty>No builds found here.</div>';
+    $("#main").innerHTML=`<h1>Nothing to show yet</h1>
+      <p class=sub>Looking in <code>${d.root}</code></p>
+      <div class=msg>${g.hint||"No build manifests found."}</div>
+      <h2>What the viewer looks for</h2>
+      <div class=bars>${(g.looked_for||[]).map(f=>`<div class=bar>
+        <span>${f}</span><span class=track></span><span class=n></span></div>`).join("")}</div>
+      ${(g.entries&&g.entries.length)?`<h2>What is actually here</h2>
+        <div class=scroll><table><tbody>${g.entries.map(e=>`<tr><td>${e}</td></tr>`).join("")}</tbody></table></div>`:""}
+      <h2>Produce a build</h2>
+      <pre>shuddhi pipeline --registry my-registry.json --out shuddhi-out/
+shuddhi ui --dir shuddhi-out/</pre>`;
+    return;
+  }
+  $("#runs").innerHTML = d.runs.map(r=>`
     <button class="runitem ${r.id===sel?'sel':''}" data-id="${r.id}">
       <div class=t>${r.running?'<i class=live></i>':''}${r.corpus_id}</div>
       <div class=m>${r.kept_docs!=null?fmt(r.kept_docs)+" kept of "+fmt(r.total_docs)
         :(r.total_docs!=null?fmt(r.total_docs)+" documents measured":(r.running?"running":"no manifest yet"))}
       ${r.warnings?' · <span style="color:var(--warn)">'+r.warnings+' warning'+(r.warnings>1?'s':'')+'</span>':''}</div>
       <div class=m>${r.id}</div>
-    </button>`).join("") : '<div class=empty>No builds found here yet.</div>';
+    </button>`).join("");
   document.querySelectorAll(".runitem").forEach(b=>b.onclick=()=>{sel=b.dataset.id;loadRuns();loadRun(sel);});
   if(!sel && d.runs.length){sel=d.runs[0].id;loadRun(sel);loadRuns();}
 }
