@@ -348,7 +348,7 @@ shuddhi ui --dir shuddhi-out/</pre>`;
       <div class=m>${r.kept_docs!=null?fmt(r.kept_docs)+" kept of "+fmt(r.total_docs)
         :(r.total_docs!=null?fmt(r.total_docs)+" documents measured":(r.running?"running":"no manifest yet"))}
       ${r.warnings?' · <span style="color:var(--warn)">'+r.warnings+' warning'+(r.warnings>1?'s':'')+'</span>':''}</div>
-      <div class=m>${r.id}</div>
+      ${r.id!=="."?`<div class=m>${r.id}</div>`:""}
     </button>`).join("");
   document.querySelectorAll(".runitem").forEach(b=>b.onclick=()=>{sel=b.dataset.id;loadRuns();loadRun(sel);});
   if(!sel && d.runs.length){sel=d.runs[0].id;loadRun(sel);loadRuns();}
@@ -361,7 +361,7 @@ async function loadRun(id){
   let h="";
 
   h+=`<h1>${(c&&c.corpus_id)||(b&&b.corpus_id)||id}</h1>
-      <p class=sub>${id} · ${(b&&b.generated_utc)||(c&&c.generated_utc)||""}</p>`;
+      <p class=sub>${[id!=="."?id:"", (b&&b.generated_utc)||(c&&c.generated_utc)||""].filter(Boolean).join(" · ")}</p>`;
 
   const ev=d.events||[];
   if(meta.running){
