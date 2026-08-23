@@ -6,10 +6,13 @@ New here? Start with the [Quickstart](QUICKSTART.md). This guide assumes you
 have run the demo once.
 
 **Contents**
+0. Before anything: `shuddhi doctor` tells you whether the interpreter you
+   are about to use can actually run the pipeline. It is the first thing to
+   run and the first thing to check when something is odd.
 1. [The idea: receipts, not trust](#1-the-idea-receipts-not-trust)
 2. [Data model](#2-data-model)
 3. [The registry and the provenance gate](#3-the-registry-and-the-provenance-gate)
-4. [Measure: `run` and `merge`](#4-measure-run-and-merge)
+4. [Running it: one command, or stage by stage](#4-running-it-one-command-or-stage-by-stage)
 5. [Near-duplicate clustering](#5-near-duplicate-clustering)
 6. [The filters](#6-the-filters)
 7. [Build: applying the filters](#7-build-applying-the-filters)
@@ -140,7 +143,26 @@ if anything was refused** — wire it into CI.
 
 ---
 
-## 4. Measure: `run` and `merge`
+## 4. Running it: one command, or stage by stage
+
+Most of the time this is the whole thing:
+
+```bash
+shuddhi pipeline --registry my-registry.json --out shuddhi-out/
+```
+
+`pipeline` runs every stage below in the correct order and writes the
+manifests, the cleaned corpus, a regulatory draft and an HTML receipt. The
+ordering is not cosmetic: the language models must be trained *before* the
+measurement pass, or the measurement records no perplexity distribution and
+the filter silently has nothing to threshold against. Encoding that is most
+of what the command is for.
+
+Run the stages yourself when you need to parallelise across shards, resume
+after a failure, or look at the numbers between phases — which is what the
+rest of this guide describes.
+
+### Measure: `run` and `merge`
 
 `run` makes one streaming pass per shard and computes two different kinds of
 number, which are never mixed:
@@ -384,6 +406,29 @@ build/<shard>.filtered.txt cleaned text (only with --emit text)
 
 Every JSON manifest records the engine version, Python version, and library
 versions that produced it.
+
+### Looking at them
+
+```bash
+shuddhi ui --dir shuddhi-out/
+```
+
+Serves a local viewer over the builds in a directory: history, the receipts
+with copy buttons, what each filter dropped, the datasets that went in,
+warnings and errors, live progress while a run is happening, and downloads.
+It reads your filesystem, binds to 127.0.0.1, and has no accounts, no
+database and no telemetry — it works air-gapped because there is no CDN to
+reach.
+
+`report.html` in the output directory is the same information as one
+self-contained file, which is the form to email an auditor or attach to a
+compliance pack.
+
+Progress adapts to where it is going: a live bar with rate and ETA on a
+terminal, timestamped lines every 15 seconds when piped to `docker logs` or
+CI. Every run also appends `events.jsonl` — phases, progress, warnings,
+errors — which is what the viewer reads, so the UI is a view over the log
+the run already wrote rather than a second implementation of progress.
 
 ---
 

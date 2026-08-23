@@ -978,7 +978,7 @@ def cmd_pipeline(args) -> int:
         print("no accepted shards in this registry", file=sys.stderr)
         return 2
 
-    out = args.out
+    out = os.path.normpath(args.out)
     run_dir = os.path.join(out, "run")
     lm_dir = os.path.join(out, "lms")
     sig_dir = os.path.join(out, "sigs")
@@ -1056,7 +1056,7 @@ def cmd_pipeline(args) -> int:
 Done. Everything is under {out}/
 
   {out}/build/BUILD-MANIFEST.json   the receipt to cite in your training ledger
-  {out}/build/*.filtered.txt        the cleaned corpus {'(use --emit text to write it)' if args.emit == 'none' else ''}
+  {out}/build/*.filtered.txt        the cleaned corpus{' — pass --emit text to write it' if args.emit == 'none' else ''}
   {out}/REPORT.md                   readable summary
   {out}/report.html                 open this in a browser
 """)
