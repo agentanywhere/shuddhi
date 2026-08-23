@@ -1,0 +1,22 @@
+# Bitbucket Pipelines — gate on provenance, then publish the receipt.
+image: ghcr.io/agentanywhere/shuddhi:1.2.0
+
+pipelines:
+  pull-requests:
+    '**':
+      - step:
+          name: Provenance gate
+          script:
+            - python /app/factory.py check --registry registry.json
+  branches:
+    main:
+      - step:
+          name: Provenance gate
+          script:
+            - python /app/factory.py check --registry registry.json
+      - step:
+          name: Build the corpus
+          script:
+            - python /app/factory.py pipeline --registry registry.json --out shuddhi-out --emit none
+          artifacts:
+            - shuddhi-out/**

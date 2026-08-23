@@ -52,6 +52,18 @@ jobs:
           fi
           echo "hashes identical across independent runs"
 
+  ui:
+    name: viewer (browser tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt playwright
+      - run: playwright install --with-deps chromium
+      - run: python -m pytest tests/test_ui_playwright.py -q
+
   docker:
     name: container image
     runs-on: ubuntu-latest
