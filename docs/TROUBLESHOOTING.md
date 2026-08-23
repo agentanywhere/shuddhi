@@ -97,6 +97,53 @@ partition configs match.
 
 ---
 
+### The build kept zero documents
+
+The build now says so loudly and records it in the manifest's `warnings`,
+but the cause is usually one of these:
+
+- **Near-dup on a small or templated corpus.** If your documents share most
+  of their wording — generated from a template, or the same press release
+  with names changed — they genuinely are near-duplicates, and one exemplar
+  survives per cluster. Check `neardup-drop.u64.stats.json`: a
+  `largest_cluster` close to your document count is the tell. Rebuild
+  without `--neardup-drop` to confirm.
+- **A quality or perplexity threshold nothing can meet.** Try
+  `--min-quality 0` and drop `--lm-dir`, then reintroduce them one at a time.
+- **Documents shorter than 200 characters**, which the quality stage caps
+  below the default threshold.
+
+Diagnose by reading the per-reason counts in `BUILD-MANIFEST.json` — the
+filter responsible is the one with the large number next to it.
+
+---
+
+### `train-lm` warns that the model was trained on a handful of documents
+
+The default `--sample-every 200` is sized for a corpus of millions. On a
+small corpus it selects almost nothing, and a character-trigram model built
+from a few documents does not describe the language — so any percentile
+cutoff taken from it is arbitrary.
+
+```bash
+python3 factory.py train-lm --registry R --shard S --lm-dir lms/ --sample-every 1
+```
+
+Below a few thousand documents, consider skipping the perplexity filter
+entirely: percentile thresholds need scale to mean anything.
+
+---
+
+### `doctor` says "no virtual environment"
+
+If you are running `.venv/bin/python` directly this is now reported
+correctly as an unactivated virtual environment. If you genuinely are on a
+system Python and meant to use a venv, activate it and re-run `doctor` —
+the line it prints is `sys.executable`, which is the ground truth about
+which interpreter your packages must be installed into.
+
+---
+
 ### Everything is classified `und` / language purity looks wrong
 
 You are on the Unicode-script fallback because `lid.176.ftz` is absent.

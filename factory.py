@@ -184,11 +184,21 @@ def cmd_doctor(args) -> int:
         print("            ERROR: Python 3.10 or newer is required")
         ok = False
 
+    # sys.prefix differs from base_prefix inside ANY virtual environment,
+    # whether or not it was "activated" — running .venv/bin/python directly
+    # is a perfectly normal way to use one, and reporting that as "no venv"
+    # sent people hunting for a problem they did not have.
+    in_venv = sys.prefix != getattr(sys, "base_prefix", sys.prefix)
     venv = os.environ.get("VIRTUAL_ENV")
     conda = os.environ.get("CONDA_DEFAULT_ENV")
-    where = (f"venv: {venv}" if venv else
-             f"conda env: {conda}" if conda else
-             "no virtualenv/conda env active (using a system or user Python)")
+    if conda:
+        where = f"conda env: {conda}"
+    elif venv:
+        where = f"venv: {venv}"
+    elif in_venv:
+        where = f"virtual environment at {sys.prefix} (not activated in this shell, which is fine)"
+    else:
+        where = "no virtual environment (using a system or user Python)"
     print(f"environment {where}")
 
     required = [("numpy", "array maths: dedup, manifests, builds")]
@@ -465,6 +475,16 @@ def cmd_train_lm(args) -> int:
             total += len(doc)
             if total >= budget:
                 break
+    if len(texts) < 50 or total < 200_000:
+        print(
+            f"WARNING: {shard.shard_id}: the language model was trained on only "
+            f"{len(texts)} document(s) / {total/1000:.0f} KB, because --sample-every "
+            f"is {args.sample_every} and this shard is small. A model this thin "
+            "does not describe the language, so any perplexity cutoff derived "
+            f"from it is arbitrary. Re-run with --sample-every 1 (or omit the "
+            "perplexity filter for a corpus this size).",
+            file=sys.stderr,
+        )
     lm = CharTrigramLM.train(texts)
     out = os.path.join(args.lm_dir, f"{shard.language}.lm.gz")
     lm.save(out)
@@ -618,6 +638,25 @@ def cmd_build(args) -> int:
 
     fbh = filtered_build_hash(kept_arrays)
     total_kept = int(sum(a.size for a in kept_arrays))
+    total_seen = total_kept + sum(
+        sum(r["dropped"].values()) for r in per_shard.values()
+    )
+    build_warnings: list[str] = []
+    if total_kept == 0 and total_seen > 0:
+        build_warnings.append(
+            "EMPTY BUILD: every document was dropped. A receipt for an empty "
+            "corpus is a valid receipt for nothing — check the drop counts below "
+            "and loosen whichever filter is responsible."
+        )
+    elif total_seen > 0 and total_kept / total_seen < 0.5:
+        build_warnings.append(
+            f"HIGH DROP RATE: kept only {total_kept}/{total_seen} documents "
+            f"({total_kept / total_seen:.1%}). That may be correct for a raw "
+            "crawl, but on curated input it usually means a filter is "
+            "misconfigured — check the per-reason counts."
+        )
+    for w in build_warnings:
+        print(f"WARNING: {w}", file=sys.stderr)
     all_reasons = list(DROP_REASONS) + [f"plugin:{p.name}" for p in plugin_objs]
     dropped_by_reason = {
         reason: sum(r["dropped"].get(reason, 0) for r in per_shard.values())
@@ -641,6 +680,7 @@ def cmd_build(args) -> int:
         "shards_built": [s.shard_id for s in build_shards],
         "partial_build": len(build_shards) < len(shard_ids),
         "kept_docs": total_kept,
+        "warnings": build_warnings,
         "dropped_by_reason": dropped_by_reason,
         "pii_redactions": sum(r["pii_redactions"] for r in per_shard.values()),
         "per_shard": per_shard,

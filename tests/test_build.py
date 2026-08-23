@@ -247,3 +247,68 @@ def test_partition_configs_are_invariant_with_lm_cutoffs(tmp_path):
     mu = json.loads((un / "BUILD-MANIFEST.json").read_text())
     assert mu["filtered_build_hash"] == ms["filtered_build_hash"]
     assert mu["filter_config_sha256"] == ms["filter_config_sha256"]
+
+
+def test_empty_build_is_flagged_in_the_manifest(tmp_path, capsys):
+    """A receipt for an empty corpus is a valid receipt for nothing. The
+    build must say so, in the manifest and on stderr, rather than exiting 0
+    with a clean-looking hash. (Found by walking the quickstart as a new
+    user: every document was dropped and nothing complained.)"""
+    docs = [GOOD + str(i) for i in range(6)]
+    shard = tmp_path / "s.txt"
+    shard.write_text("\n\n".join(docs) + "\n\n", encoding="utf-8")
+    reg = tmp_path / "r.json"
+    reg.write_text(json.dumps({
+        "registry_version": 1, "corpus_id": "empty",
+        "shards": [{"shard_id": "s", "path": str(shard), "source": "fixture",
+                    "license": "CC0-1.0", "date_acquired": "2026-08-23",
+                    "data_class": "synthetic-own", "language": "eng"}],
+    }))
+    run = tmp_path / "run"
+    assert factory.main(["run", "--registry", str(reg), "--shard", "s",
+                         "--out", str(run), "--sample-every", "1"]) == 0
+    assert factory.main(["merge", "--registry", str(reg), "--out", str(run)]) == 0
+
+    # a quality threshold nothing can satisfy
+    out = tmp_path / "b"
+    assert factory.main(["build", "--registry", str(reg), "--run-dir", str(run),
+                         "--build-out", str(out), "--min-quality", "1.1"]) == 0
+    bm = json.loads((out / "BUILD-MANIFEST.json").read_text())
+    assert bm["kept_docs"] == 0
+    assert bm["warnings"], "an empty build must carry a warning in its manifest"
+    assert "EMPTY BUILD" in bm["warnings"][0]
+    assert "EMPTY BUILD" in capsys.readouterr().err
+
+
+def test_high_drop_rate_is_flagged(tmp_path):
+    docs = [GOOD + str(i) for i in range(4)] + ["short one", "short two", "short three"]
+    shard = tmp_path / "s.txt"
+    shard.write_text("\n\n".join(docs) + "\n\n", encoding="utf-8")
+    reg = tmp_path / "r.json"
+    reg.write_text(json.dumps({
+        "registry_version": 1, "corpus_id": "drop",
+        "shards": [{"shard_id": "s", "path": str(shard), "source": "fixture",
+                    "license": "CC0-1.0", "date_acquired": "2026-08-23",
+                    "data_class": "synthetic-own", "language": "eng"}],
+    }))
+    run = tmp_path / "run"
+    factory.main(["run", "--registry", str(reg), "--shard", "s", "--out", str(run),
+                  "--sample-every", "1"])
+    factory.main(["merge", "--registry", str(reg), "--out", str(run)])
+    out = tmp_path / "b"
+    factory.main(["build", "--registry", str(reg), "--run-dir", str(run),
+                  "--build-out", str(out), "--min-quality", "0.9"])
+    bm = json.loads((out / "BUILD-MANIFEST.json").read_text())
+    if bm["kept_docs"] and bm["kept_docs"] < 4:
+        assert any("HIGH DROP RATE" in w for w in bm["warnings"])
+
+
+def test_healthy_build_has_no_warnings(tmp_path):
+    reg_path, _ = make_corpus(tmp_path)
+    run_dir = measure(tmp_path, reg_path)
+    out = tmp_path / "b"
+    assert factory.main(["build", "--registry", reg_path, "--run-dir", run_dir,
+                         "--build-out", str(out)]) == 0
+    bm = json.loads((out / "BUILD-MANIFEST.json").read_text())
+    assert bm["kept_docs"] > 0
+    assert bm["warnings"] == []
