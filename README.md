@@ -1,6 +1,6 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/img/brand/shuddhi-horizontal-dark.svg">
-  <img alt="Shuddhi" src="docs/img/brand/shuddhi-horizontal-light.svg" width="300">
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/brand/shuddhi-horizontal-dark.png">
+  <img alt="Shuddhi" src="docs/img/brand/shuddhi-horizontal-light.png" width="300">
 </picture>
 
 # Shuddhi (शुद्धि) — Data Factory
