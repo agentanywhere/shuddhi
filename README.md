@@ -17,6 +17,11 @@ does not depend on anyone's memory. That is what this produces.
 
 Internally the engine is the **Tatva Data Factory**; Shuddhi is the product.
 
+<p align="center">
+  <img src="docs/img/shuddhi-flow.svg" width="100%"
+       alt="Raw shards flow left to right through the provenance, language-ID, dedup, quality, domain and contamination gates; one is refused at the provenance gate, duplicates collapse, junk dims out, and the survivors land in a corpus build that seals with a receipt hash.">
+</p>
+
 [![CI](https://github.com/agentanywhere/shuddhi/actions/workflows/ci.yml/badge.svg)](https://github.com/agentanywhere/shuddhi/actions/workflows/ci.yml)
 [![License](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg)](pyproject.toml)
