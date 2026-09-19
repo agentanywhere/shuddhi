@@ -24,7 +24,8 @@ from __future__ import annotations
 
 import hashlib
 import os
-import re
+
+from .words import normalize_words
 
 PROBE_CHARS = 6000
 MIN_DISTINCT = 2
@@ -52,34 +53,44 @@ _BUILTIN: dict[str, tuple[str, ...]] = {
 }
 
 
-_SPLIT = re.compile(r"\W+", re.UNICODE)
-
-
 class ToxicityLexicon:
     """Matching is word-set membership, not one giant alternation regex: the
-    probe is split on non-word chars (same boundary semantics as (?<!\\w)term
-    (?!\\w) — 'shitake'/'Scunthorpe' cannot match) and each word is a C-speed
-    frozenset lookup. Measured on the first v1.2 production build: the regex
-    version cost ~1–2 ms/doc and dominated build time; this is ~50 µs/doc.
-    Multi-word terms from external lexicons keep a small alternation regex —
-    the builtin starter has none, so the common path never runs a regex scan.
+    probe is reduced to the shared matching normal form (words.py — NFKC +
+    casefold, combining marks word-internal, so a Devanagari term is ONE word,
+    ज़ matches however it was typed, and 'shitake'/'Scunthorpe' cannot match)
+    and each word is a C-speed frozenset lookup. Lexicon terms go through the
+    same normal form, so a term and the text it should hit cannot disagree
+    about spelling-level encoding.
+
+    Measured on the first v1.2 production build: the regex version cost
+    ~1–2 ms/doc and dominated build time; this is ~50 µs/doc for English.
+    Multi-word terms from external lexicons are matched as word sequences,
+    keyed by first word, so the common path stays a set lookup per word.
+
+    (Through v1.2.0 the splitter was \\W+, which saw a break at every matra:
+    all 17 builtin Devanagari terms fell onto a boundary-regex fallback, गांड
+    matched inside गांडीव — Arjuna's bow — and density was computed over ~2x
+    the true word count. Word-normalizer v2 fixed it; see words.py.)
     """
 
     def __init__(self, terms_by_lang: dict[str, tuple[str, ...]], source: str):
         self.source = source
         all_terms = sorted({t.lower() for terms in terms_by_lang.values() for t in terms if t})
         self.n_terms = len(all_terms)
-        self._words = frozenset(t for t in all_terms if not _SPLIT.search(t))
-        multi = [t for t in all_terms if _SPLIT.search(t)]
-        self._multi_rx = (
-            re.compile(
-                r"(?<!\w)(?:" + "|".join(re.escape(t) for t in multi) + r")(?!\w)",
-                re.IGNORECASE | re.UNICODE,
-            )
-            if multi else None
-        )
-        # sha over the sorted term list — matcher implementation is not part
-        # of the lexicon identity
+        single: set[str] = set()
+        multi: dict[str, list[tuple[str, ...]]] = {}
+        for t in all_terms:
+            words = tuple(normalize_words(t))
+            if len(words) == 1:
+                single.add(words[0])
+            elif words:
+                multi.setdefault(words[0], []).append(words)
+        self._words = frozenset(single)
+        # longest first, so "a b c" wins over "a b" at the same position
+        self._multi = {k: sorted(set(v), key=len, reverse=True) for k, v in multi.items()}
+        # sha over the sorted term list as written — the matcher and the
+        # normal form are not part of the lexicon identity (the normal form
+        # is pinned separately: FilterConfig word_normalizer_version)
         self.sha256 = hashlib.sha256(
             "\n".join(all_terms).encode("utf-8")
         ).hexdigest()
@@ -106,20 +117,22 @@ class ToxicityLexicon:
         return cls(terms, f"builtin+{lexicon_dir}")
 
     def score(self, text: str) -> dict:
-        probe = text[:PROBE_CHARS].lower()
-        words = _SPLIT.split(probe)
+        words = normalize_words(text[:PROBE_CHARS])
         n_words = max(1, len(words))
         tox = self._words
+        multi = self._multi
         n_hits = 0
         distinct_hits: set[str] = set()
-        for w in words:
+        for i, w in enumerate(words):
             if w in tox:
                 n_hits += 1
                 distinct_hits.add(w)
-        if self._multi_rx is not None:
-            for m in self._multi_rx.findall(probe):
-                n_hits += 1
-                distinct_hits.add(m.lower())
+            if multi and w in multi:
+                for seq in multi[w]:
+                    if tuple(words[i : i + len(seq)]) == seq:
+                        n_hits += 1
+                        distinct_hits.add(" ".join(seq))
+                        break
         density = n_hits / n_words
         return {
             "hits": n_hits,

@@ -52,6 +52,89 @@ counts, and exact-dedup run over every byte. LID, quality, domain, near-dup,
 contamination and token ratios run on a deterministic index-stride sample and
 always report their exact coverage.
 
+**The matching normal form.** The contamination screen (8-word grams) and
+the toxicity matcher (whole-word lexicon lookup) both ask "does this text
+contain those words?", so they share one definition of *the same text* and of
+*a word*: `words.py`, identified in receipts by `word_normalizer_version`.
+
+| Version | Behaviour | Shuddhi |
+|---|---|---|
+| 1 | `lower()`, split on `\W+` — not recorded in receipts | through 1.2.0 |
+| 2 | NFKC_Casefold-style fold; combining marks are word-internal | 1.3.0 |
+
+Version 2, in order:
+
+1. **Fold.** NFKC → casefold → remove ignorable code points (category `Cf`,
+   variation selectors, combining grapheme joiner) → NFKC again if anything
+   changed. This is Unicode's NFKC_Casefold recipe assembled from the
+   standard library. It erases differences of *encoding*, not of spelling:
+
+   | One text, two encodings | |
+   |---|---|
+   | ज़ as U+095B, or as ज + nukta U+093C | very common: IMEs disagree |
+   | Bengali ো, Tamil ொ, Malayalam ൊ typed whole or as two halves | |
+   | Arabic presentation forms (U+FB50–FEFF) vs plain letters | PDF extraction |
+   | ZWJ / ZWNJ / zero-width space / soft hyphen present or absent | rendering hints, `<wbr>` |
+   | bidi marks and embeddings around a word | everywhere in Urdu web text |
+   | `ﬁ` ligature, full-width Latin, `Straße` vs `STRASSE` | |
+
+2. **Split.** A word is a maximal run of `\w` and combining marks (`M*`)
+   containing at least one `\w` character.
+
+**Not folded, on purpose:** Arabic-script vocalisation marks and tatweel,
+Arabic vs Farsi yeh/kaf, a dropped nukta (बाजार for बाज़ार), legacy Malayalam
+chillu sequences, transliteration. Those are spelling choices, and folding
+them is language-specific policy rather than a Unicode equivalence. If
+measurement shows they matter, they are a version 3; `tests/test_words.py`
+pins the current boundary so that change is a decision, not an accident.
+
+Version 1 was wrong for every script that writes vowels as combining marks.
+Python's `\w` does not match categories Mn/Mc, so each Indic word broke at
+every matra, virama and nukta, and the marks were discarded: मुझे became
+`म`, `झ`; seven Hindi words became 13 fragments, six Tamil words 19;
+vocalised Urdu broke at every zabar/zer/pesh. Both sides of the screen were
+fragmented identically, so it still ran, but an "8-word" gram spanned about
+four real words reduced to consonant skeletons. That made the screen both
+weaker than stated and noisier (मेरा and मारा were the same "words"; five
+shared Hindi words could raise an 8-gram hit; the toxicity term गांड matched
+inside गांडीव, Arjuna's bow). For pure-ASCII input versions 1 and 2 produce
+the identical word list, at the same cost. Mark-heavy text costs more under
+version 2 (≈0.5 ms per 4,000-character Hindi document, ≈6 ms at the 48,000-
+character probe cap): combining marks defeat Unicode's normalization quick
+check, so that text always pays for a full pass.
+
+**Changing the normal form changes results, and therefore receipts:**
+
+- *Contamination and toxicity verdicts* on non-ASCII text can differ between
+  versions in both directions. A v1 contamination count for an Indic or
+  Arabic-script corpus is not comparable with a v2 count, and a v1 "0 hits"
+  does not carry the 8-word meaning the docs gave it. **Re-screen those
+  corpora**; do not carry the old number forward. Eval-set files themselves
+  are unchanged (they hold raw text, so `eval_set_sha256` is stable) — the
+  gram index is rebuilt from them in memory on every run. Toxicity lexicon
+  files and `toxicity_lexicon_sha256` are likewise unchanged.
+- *Builds.* `filter_config_sha256` changes for **every** build, including
+  English-only ones, because `scorer_params.word_normalizer_version` is now
+  part of the filter identity. `filtered_build_hash` — a content hash of the
+  kept documents — changes only if the kept set changes, i.e. only for
+  corpora where a contamination or toxicity verdict actually moved.
+- *Measurement stats* now carry `contamination.word_normalizer_version`. A
+  stats file without that field was screened with version 1.
+- `corpus_build_hash`, shard checksums, exact/near dedup, quality, LID and
+  PII do not use the normal form and are unchanged. The corpus text itself is
+  never rewritten: the normal form exists only inside the two screens.
+
+**Keeping it stable.** Mark and ignorable ranges are derived from the
+interpreter's `unicodedata` tables — the same tables `\w` and NFKC follow —
+and the table version is recorded as `env.unicode` in each manifest. Unicode's
+stability policies mean a newer table only adds behaviour for newly assigned
+characters. Three tests hold the line: a golden digest over the sample texts
+that fails until `WORD_NORMALIZER_VERSION` is bumped (verified identical on
+Unicode 13.0 through 16.0); a check that `FilterConfig`'s hash moves with the
+version; and an AST scan that fails if any module other than `words.py` hands
+a `\W` pattern to `re` — which is exactly how version 1 went wrong, in two
+places at once.
+
 **The build hash.** `corpus_build_hash` = blake2b-256 over the sorted set of
 unique 64-bit document hashes across accepted shards. Order-independent,
 reproducible from the raw files, cheap to verify. Every training run that

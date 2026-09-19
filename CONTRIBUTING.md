@@ -46,6 +46,23 @@ python3 -m pytest tests/ -q    # 111 tests, seconds, no network
   build manifests.
 - **Documentation is part of the change.** New flag → CLI Reference. New
   behaviour → User Guide. New failure mode → Troubleshooting.
+- **Need words? Use `shuddhi/words.py`.** Python's `\w` does not match
+  combining marks, so a private `\W` splitter breaks every Indic word at each
+  vowel sign — a bug that shipped once, in two modules. A test rejects `\W`
+  patterns anywhere else. Any change to what `words.py` outputs must bump
+  `WORD_NORMALIZER_VERSION`: receipts pin it, and a golden-digest test fails
+  until you do.
+
+## Releasing
+
+The version is stated once, in `shuddhi/__init__.py` (mirrored in
+`pyproject.toml`; a test keeps them equal). Between releases it carries a
+`.devN` suffix so receipts written by unreleased code say so. To release:
+drop the suffix in both files, rename the changelog's `Unreleased` section to
+`X.Y.Z — <date>`, update the pinned image tag in `ci/` and `docs/`, merge,
+then push the tag `vX.Y.Z` — the tag is what publishes the images. Afterwards
+bump to the next `.dev0`. A change that alters receipts for unchanged input
+(a hash definition, the matching normal form) is at least a minor version.
 
 ## Adding a filter
 
