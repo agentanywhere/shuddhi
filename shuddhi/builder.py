@@ -50,6 +50,7 @@ import numpy as np
 from . import pii as pii_mod
 from . import quality as quality_mod
 from . import shards as shards_mod
+from .words import WORD_NORMALIZER_VERSION
 
 DROP_REASONS = ("exact_dup", "near_dup", "quality", "perplexity", "toxicity",
                 "contamination", "pii")
@@ -87,6 +88,10 @@ class FilterConfig:
                 "toxicity_lexicon_sha256": self.toxicity_lexicon_sha256,
                 "plugins": self.plugin_identities,
                 "scorer_params": {
+                    # word splitting behind the contamination grams and the
+                    # toxicity matcher (words.py): a different splitter is a
+                    # different filter, even with every threshold unchanged
+                    "word_normalizer_version": WORD_NORMALIZER_VERSION,
                     "ppx_probe_chars": ngram_lm.SCORE_PROBE_CHARS,
                     "quality_probe_chars": quality_mod.PROBE_CHARS,
                     "quality_probe_words": quality_mod.PROBE_WORDS,

@@ -14,6 +14,9 @@ Programmatic use:
     meta, accepted, refused = registry.load_registry("registry.json")
 """
 
-__version__ = "1.2.0"
+# A ".devN" suffix means unreleased code: receipts it writes say so, and are
+# never mistaken for the last release's. Releasing = drop the suffix here and
+# in pyproject.toml, date the CHANGELOG section, tag vX.Y.Z.
+__version__ = "1.3.0.dev0"
 
 __all__ = ["__version__"]
