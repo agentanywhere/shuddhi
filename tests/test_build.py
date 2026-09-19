@@ -103,6 +103,9 @@ def test_contamination_drop(tmp_path):
                          "--build-out", str(out), "--eval-set", str(eval_set)]) == 0
     bm = json.loads((out / "BUILD-MANIFEST.json").read_text())
     assert bm["dropped_by_reason"]["contamination"] >= 1
+    # the receipt states which word normaliser produced the grams (words.py)
+    assert bm["filter_config"]["scorer_params"]["word_normalizer_version"] == 2
+    assert bm["env"]["unicode"]
 
 
 def test_changed_shard_fails_integrity(tmp_path):
@@ -464,3 +467,15 @@ def test_no_drops_file_without_the_flag(tmp_path):
         "--build-out", str(build), "--emit", "text",
     ]) == 0
     assert not (build / "dropped.jsonl").exists()
+
+
+def test_run_stats_record_the_word_normalizer(tmp_path):
+    reg_path, _ = make_corpus(tmp_path)
+    eval_set = tmp_path / "eval.jsonl"
+    eval_set.write_text(json.dumps({"id": "e1", "text": GOOD + "0"}) + "\n")
+    out = tmp_path / "run"
+    assert factory.main(["run", "--registry", reg_path, "--shard", "eng", "--out", str(out),
+                         "--sample-every", "1", "--eval-set", str(eval_set)]) == 0
+    stats = json.loads((out / "eng.stats.json").read_text())
+    assert stats["contamination"]["word_normalizer_version"] == 2
+    assert stats["contamination"]["eval_set_sha256"]
