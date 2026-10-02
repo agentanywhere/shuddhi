@@ -38,7 +38,7 @@ docker run --rm ghcr.io/agentanywhere/shuddhi:latest demo
 
 Nothing to build and nothing to install — the image is published and
 multi-architecture (x86-64 and arm64, so Apple Silicon runs native). Pin a
-version in anything reproducible: `:1.2.0` rather than `:latest`. Prefer to
+version in anything reproducible: `:1.3.0` rather than `:latest`. Prefer to
 build it yourself? `docker build -t shuddhi . && docker run --rm shuddhi demo`.
 
 That runs the complete pipeline over a bundled sample corpus with
@@ -344,7 +344,7 @@ when any shard is untagged or carries a customer data class, so an unreviewed
 dataset cannot land:
 
 ```bash
-docker run --rm -v "$PWD:/work" ghcr.io/agentanywhere/shuddhi:1.2.0 \
+docker run --rm -v "$PWD:/work" ghcr.io/agentanywhere/shuddhi:1.3.0 \
     check --registry /work/registry.json
 ```
 
