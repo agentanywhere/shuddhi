@@ -2,7 +2,7 @@
 
 Notable changes to Shuddhi. Dates are release dates.
 
-## Unreleased — will be 1.3.0
+## 1.3.0 — 2026-10-03
 
 **Fixed — Indic and vocalised-Urdu words were split at every vowel sign.**
 The contamination screen and the toxicity matcher split text on `\W+`, and
@@ -57,10 +57,12 @@ Consequences for receipts:
   Eval-set files and `eval_set_sha256` are unchanged.
 - Manifests record the interpreter's Unicode version as `env.unicode`.
 
-**Changed — unreleased code says so in its receipts.** The version is
-`1.3.0.dev0` until release and is stated once (`shuddhi/__init__.py`);
-`factory_version` in manifests now derives from it instead of a second
-constant, and tests keep `pyproject.toml` and the changelog in step.
+**Changed — unreleased code says so in its receipts.** Between releases the
+version carries a `.devN` suffix, so a manifest written by unreleased code is
+never mistaken for a release's. The version is stated once
+(`shuddhi/__init__.py`); `factory_version` in manifests now derives from it
+instead of a second constant, and tests keep `pyproject.toml` and the
+changelog in step.
 
 Details: *The matching normal form* in `docs/ENGINE-INTERNALS.md`.
 
