@@ -72,3 +72,65 @@ def test_fast_path_speed():
         lex.score(doc)
     per_doc = (time.perf_counter() - t0) / 200
     assert per_doc < 0.001, f"{per_doc*1e3:.2f} ms/doc — fast path regressed"
+
+
+# --- Indic word boundaries (word-normalizer v2, words.py) -------------------
+
+def test_builtin_devanagari_terms_take_the_set_lookup_path():
+    # through v1.2.0 \W+ saw a break at every matra, so every Hindi term was
+    # classed "multi-word" and the builtin lexicon always ran the regex scan
+    lex = ToxicityLexicon.builtin()
+    assert lex._multi == {}
+    assert "चूतिया" in lex._words and "रंडी" in lex._words
+
+
+def test_hindi_density_counts_real_words():
+    r = ToxicityLexicon.builtin().score(TOXIC_HI)
+    assert r["hits"] == 3 and r["distinct"] == 3
+    assert r["density"] == 3 / 9  # 9 words; v1 counted ~2x as many fragments
+
+
+def test_devanagari_word_boundaries():
+    # गांडीव is Arjuna's bow. v1 matched the term गांड inside it, because the
+    # following matra ी is not \w and so looked like a word boundary.
+    r = ToxicityLexicon.builtin().score("अर्जुन ने गांडीव उठाया और गांडीव की टंकार गूँजी।")
+    assert r["hits"] == 0
+
+
+def test_multiword_indic_terms_respect_mark_boundaries(tmp_path):
+    (tmp_path / "hin.txt").write_text("ज़ोर्बल फ्लैक्स\n", encoding="utf-8")
+    lex = ToxicityLexicon.from_dir(str(tmp_path))
+    assert lex._multi
+    assert lex.score("यह ज़ोर्बल फ्लैक्स है।")["hits"] == 1
+    # the same letters continuing into a longer word are a different word
+    assert lex.score("यह ज़ोर्बल फ्लैक्सी है।")["hits"] == 0
+
+
+def test_term_and_text_may_encode_the_nukta_differently(tmp_path):
+    # lexicon typed with precomposed U+095B, document with ज + U+093C (and
+    # the reverse): the same word, so it must hit either way
+    (tmp_path / "hin.txt").write_text("\u095bोर्बल\n", encoding="utf-8")
+    lex = ToxicityLexicon.from_dir(str(tmp_path))
+    assert lex.score("यह ज\u093cोर्बल है")["hits"] == 1
+    assert lex.score("यह \u095bोर्बल है")["hits"] == 1
+    assert lex.sha256 != ToxicityLexicon.builtin().sha256
+
+
+def test_invisible_characters_do_not_hide_a_term():
+    r = ToxicityLexicon.builtin().score("what a fu\u200bck\u00ading bull\u200dshit take")
+    assert r["distinct"] == 2
+
+
+def test_fast_path_speed_hindi():
+    import time
+
+    lex = ToxicityLexicon.builtin()
+    doc = (CLEAN_HI + " ") * 100  # fills the probe; non-ASCII => wide pattern
+    lex.score(doc)  # warm (builds the mark-aware pattern once)
+    t0 = time.perf_counter()
+    for _ in range(200):
+        lex.score(doc)
+    per_doc = (time.perf_counter() - t0) / 200
+    # ~0.8 ms measured: Unicode normalization of mark-heavy text is the cost
+    # of matching ज़ however it was typed. Guard the order of magnitude.
+    assert per_doc < 0.004, f"{per_doc*1e3:.2f} ms/doc — Indic path regressed"

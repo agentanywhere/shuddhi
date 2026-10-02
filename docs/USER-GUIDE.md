@@ -246,11 +246,26 @@ benchmarks, held-out sets, or trap prompts:
 {"id": "bench:q1", "text": "Which Indian state has the longest coastline?"}
 ```
 
-Screening normalises case and punctuation, then flags any document that
-contains an eval item verbatim or shares an 8-word span with one. Every
-candidate is verified by exact string comparison, so a reported hit is a
-real textual overlap, never a hash collision. Generate a starting set from a
-repository with `build_eval_set.py`.
+Screening reduces both sides to a matching normal form, then flags any
+document that contains an eval item verbatim or shares an 8-word span with
+one. Every candidate is verified by exact string comparison, so a reported
+hit is a real textual overlap, never a hash collision. Generate a starting
+set from a repository with `build_eval_set.py`.
+
+The normal form ignores case, punctuation and *encoding*: ज़ matches whether
+it was typed as one code point or two, and zero-width joiners, soft hyphens,
+bidi marks, PDF ligatures and Arabic presentation forms cannot hide an
+overlap. A word keeps its combining marks, so an Indic word with its vowel
+signs (मुझे, காய்கறிகள், కూరగాయలు) or a vocalised Urdu word is one word, and an
+8-word span is eight real words in every script. It does not second-guess
+spelling: बाज़ार and बाजार are different words. Your corpus text is never
+rewritten — the normal form exists only inside the screen.
+
+Receipts record which normal form screened a corpus as
+`word_normalizer_version`. Read *The matching normal form* in
+[ENGINE-INTERNALS.md](ENGINE-INTERNALS.md) before comparing screens run by
+different Shuddhi versions: results from 1.2.0 and earlier are not
+comparable on Indic or Arabic-script text.
 
 ---
 
