@@ -998,12 +998,22 @@ def cmd_build(args) -> int:
         "wall_seconds": round(time.time() - t0, 1),
     }
     out_path = os.path.join(args.build_out, "BUILD-MANIFEST.json")
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(build_manifest, f, ensure_ascii=False, indent=1)
+    _write_json_atomic(out_path, build_manifest)
     print(f"filtered_build_hash: {fbh}")
     print(f"kept {total_kept:,} docs; dropped {dropped_by_reason}")
     print(f"wrote {out_path}")
     return 0
+
+
+def _write_json_atomic(path: str, obj) -> None:
+    """Write via a temp file + rename so BUILD-MANIFEST.json is either absent
+    or complete: its presence is a trustworthy completion marker."""
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(obj, f, ensure_ascii=False, indent=1)
+        f.flush()
+        os.fsync(f.fileno())
+    os.replace(tmp, path)
 
 
 def cmd_build_union(args) -> int:
@@ -1022,18 +1032,29 @@ def cmd_build_union(args) -> int:
     from .builder import DROP_REASONS, filtered_build_hash
 
     parts = []
+    skipped: list[str] = []
     for d in args.build_outs.split(","):
         # A shell glob like build_* also matches sibling files (build_p0.log);
         # name the real problem instead of failing on a missing manifest.
         if not os.path.isdir(d):
             print(f"error: not a build directory: {d}", file=sys.stderr)
             return 2
-        if not os.path.isfile(os.path.join(d, "BUILD-MANIFEST.json")):
+        mpath = os.path.join(d, "BUILD-MANIFEST.json")
+        if not os.path.isfile(mpath):
+            if args.partial:
+                # an interrupted partition: its manifest is the completion marker
+                print(f"warning: skipping {d}: no BUILD-MANIFEST.json "
+                      "(incomplete partition)", file=sys.stderr)
+                skipped.append(d)
+                continue
             print(f"error: not a build directory (no BUILD-MANIFEST.json): {d}",
                   file=sys.stderr)
             return 2
-        with open(os.path.join(d, "BUILD-MANIFEST.json"), encoding="utf-8") as f:
+        with open(mpath, encoding="utf-8") as f:
             parts.append((d, json.load(f)))
+    if not parts:
+        print("error: no partition with a BUILD-MANIFEST.json to union", file=sys.stderr)
+        return 2
 
     base = parts[0][1]
     for _, m in parts[1:]:
@@ -1109,7 +1130,8 @@ def cmd_build_union(args) -> int:
         "env": _env_info(),
         "union_of": [d for d, _ in parts],
         "shards_built": shards_seen,
-        "partial_build": any(m["partial_build"] for _, m in parts),
+        "partial_build": bool(skipped) or any(m["partial_build"] for _, m in parts),
+        "skipped_partitions": skipped,
         "kept_docs": int(union.size),
         "cross_partition_rekept_docs": total_kept_rows - int(union.size),
         "dropped_by_reason": {
@@ -1120,8 +1142,7 @@ def cmd_build_union(args) -> int:
         "emit": base["emit"],
     }
     out_path = os.path.join(args.out, "BUILD-MANIFEST.json")
-    with open(out_path, "w", encoding="utf-8") as f:
-        json.dump(manifest, f, ensure_ascii=False, indent=1)
+    _write_json_atomic(out_path, manifest)
     print(f"filtered_build_hash: {fbh}")
     print(f"kept {union.size:,} docs "
           f"(cross-partition re-kept: {manifest['cross_partition_rekept_docs']})")
@@ -1729,6 +1750,9 @@ def main(argv=None) -> int:
     p.add_argument("--build-outs", required=True,
                    help="comma list of partition build dirs")
     p.add_argument("--out", required=True)
+    p.add_argument("--partial", action="store_true",
+                   help="skip partitions with no BUILD-MANIFEST.json (interrupted "
+                        "builds) instead of failing; skipped dirs are recorded")
     p.set_defaults(fn=cmd_build_union)
 
     p = sub.add_parser("merge", help="merge shard outputs into the build manifest")
