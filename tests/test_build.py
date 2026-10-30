@@ -464,3 +464,21 @@ def test_no_drops_file_without_the_flag(tmp_path):
         "--build-out", str(build), "--emit", "text",
     ]) == 0
     assert not (build / "dropped.jsonl").exists()
+
+
+def test_union_rejects_non_directory_build_outs(tmp_path, capsys):
+    """A glob like build_* also matches build_p0.log; the error must say the
+    entry is not a build directory, not blame a missing manifest."""
+    reg_path, _ = make_corpus(tmp_path)
+    run_dir = measure(tmp_path, reg_path)
+    o1 = tmp_path / "o1"
+    assert factory.main(["build", "--registry", reg_path, "--run-dir", run_dir,
+                         "--build-out", str(o1), "--shards", "eng"]) == 0
+    log = tmp_path / "o1.log"
+    log.write_text("build log\n")
+    capsys.readouterr()
+    assert factory.main(["build-union", "--build-outs", f"{o1},{log}",
+                         "--out", str(tmp_path / "u")]) == 2
+    err = capsys.readouterr().err
+    assert "not a build directory" in err and str(log) in err
+    assert not (tmp_path / "u" / "BUILD-MANIFEST.json").exists()
