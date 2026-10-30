@@ -1023,6 +1023,15 @@ def cmd_build_union(args) -> int:
 
     parts = []
     for d in args.build_outs.split(","):
+        # A shell glob like build_* also matches sibling files (build_p0.log);
+        # name the real problem instead of failing on a missing manifest.
+        if not os.path.isdir(d):
+            print(f"error: not a build directory: {d}", file=sys.stderr)
+            return 2
+        if not os.path.isfile(os.path.join(d, "BUILD-MANIFEST.json")):
+            print(f"error: not a build directory (no BUILD-MANIFEST.json): {d}",
+                  file=sys.stderr)
+            return 2
         with open(os.path.join(d, "BUILD-MANIFEST.json"), encoding="utf-8") as f:
             parts.append((d, json.load(f)))
 
