@@ -482,3 +482,21 @@ def test_union_rejects_non_directory_build_outs(tmp_path, capsys):
     err = capsys.readouterr().err
     assert "not a build directory" in err and str(log) in err
     assert not (tmp_path / "u" / "BUILD-MANIFEST.json").exists()
+
+
+def test_union_partial_skips_partition_without_manifest(tmp_path, capsys):
+    """An interrupted build leaves no BUILD-MANIFEST.json; --partial unions
+    the complete partitions and records the skipped one."""
+    reg_path, _ = make_corpus(tmp_path)
+    run_dir = measure(tmp_path, reg_path)
+    o1, dead = tmp_path / "o1", tmp_path / "dead"
+    assert factory.main(["build", "--registry", reg_path, "--run-dir", run_dir,
+                         "--build-out", str(o1), "--shards", "eng"]) == 0
+    dead.mkdir()  # interrupted: no manifest
+    args = ["build-union", "--build-outs", f"{o1},{dead}"]
+    assert factory.main([*args, "--out", str(tmp_path / "u0")]) != 0
+    assert factory.main([*args, "--out", str(tmp_path / "u"), "--partial"]) == 0
+    m = json.loads((tmp_path / "u" / "BUILD-MANIFEST.json").read_text())
+    assert m["skipped_partitions"] == [str(dead)]
+    assert m["partial_build"] is True
+    assert not list((tmp_path / "u").glob("*.tmp"))
