@@ -16,16 +16,15 @@ therefore a literal string match after normalization, never a hash accident.
 from __future__ import annotations
 
 import json
-import re
+
+# The matching normal form lives in words.py (shared with the toxicity
+# screen): NFKC + casefold + invisible characters removed, and combining marks
+# kept inside words — so a gram is 8 real words in Indic and Arabic scripts
+# too, not 8 consonant fragments, and encoding variants of one text match.
+from .words import WORD_NORMALIZER_VERSION, normalize_words  # noqa: F401
 
 GRAM_WORDS = 8
 DOC_PROBE_WORDS = 4000  # grams checked per doc (bounded cost per document)
-
-_NORM = re.compile(r"\W+", re.UNICODE)
-
-
-def normalize_words(text: str) -> list[str]:
-    return [w for w in _NORM.split(text.lower()) if w]
 
 
 def _crc(s: str) -> int:

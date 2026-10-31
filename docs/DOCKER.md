@@ -11,7 +11,7 @@ docker pull ghcr.io/agentanywhere/shuddhi:latest
 ```
 
 Multi-architecture (linux/amd64 and linux/arm64). Tags: `latest` tracks main;
-`1.2.0`, `1.2`, `1` follow releases; `sha-<short>` pins an exact commit. **Pin
+`1.3.0`, `1.3`, `1` follow releases; `sha-<short>` pins an exact commit. **Pin
 a version in anything reproducible** — a receipt produced by `:latest` cannot
 say which engine made it.
 
@@ -27,7 +27,7 @@ run time — the pipeline makes no outbound calls.
 ## The three verbs
 
 ```bash
-IMAGE=ghcr.io/agentanywhere/shuddhi:1.2.0
+IMAGE=ghcr.io/agentanywhere/shuddhi:1.3.0
 
 docker run --rm $IMAGE doctor    # what this environment can do
 docker run --rm $IMAGE test      # the full test suite

@@ -1,5 +1,5 @@
 # Bitbucket Pipelines — gate on provenance, then publish the receipt.
-image: ghcr.io/agentanywhere/shuddhi:1.2.0
+image: ghcr.io/agentanywhere/shuddhi:1.3.0
 
 pipelines:
   pull-requests:
