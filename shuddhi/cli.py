@@ -40,9 +40,11 @@ import os
 import platform
 import sys
 import time
+import unicodedata
 from array import array
 from collections import Counter
 
+from . import __version__
 from . import contamination as contamination_mod
 from . import dedup
 from . import domain as domain_mod
@@ -53,7 +55,7 @@ from .errors import UserError
 from .lid import make_lid
 from .progress import Reporter, bad, dim, human, ok, warn
 
-FACTORY_VERSION = "1.2.0"
+FACTORY_VERSION = __version__  # one source: shuddhi/__init__.py
 
 DEFAULT_SAMPLE_EVERY = 50
 # Below this many scored documents a percentile is noise, not a threshold.
@@ -69,6 +71,8 @@ def _env_info() -> dict:
     info = {
         "factory_version": FACTORY_VERSION,
         "python": platform.python_version(),
+        # \w and the combining-mark ranges in words.py follow these tables
+        "unicode": unicodedata.unidata_version,
         "host": platform.node(),
         "git_commit": os.environ.get("FACTORY_GIT_COMMIT", ""),
     }
@@ -676,6 +680,7 @@ def cmd_run(args) -> int:
         "near_dup": near.summary(),
         "contamination": {
             "eval_set_sha256": eval_sha,
+            "word_normalizer_version": contamination_mod.WORD_NORMALIZER_VERSION,
             "docs_checked": contam_checked,
             "docs_with_hits": contam_docs_hit,
             "hits": contam_hits,

@@ -8,7 +8,7 @@ no network calls.
 ## 1. See it work — 30 seconds
 
 ```bash
-docker run --rm ghcr.io/agentanywhere/shuddhi:1.2.0 demo
+docker run --rm ghcr.io/agentanywhere/shuddhi:1.3.0 demo
 ```
 
 That runs the whole pipeline over a bundled sample corpus which has defects
@@ -43,8 +43,8 @@ Only needed to run Shuddhi on your own data. Pick one.
 ### Docker
 
 ```bash
-docker pull ghcr.io/agentanywhere/shuddhi:1.2.0
-docker run --rm ghcr.io/agentanywhere/shuddhi:1.2.0 doctor
+docker pull ghcr.io/agentanywhere/shuddhi:1.3.0
+docker run --rm ghcr.io/agentanywhere/shuddhi:1.3.0 doctor
 ```
 
 Multi-architecture (x86-64 and arm64, so Apple Silicon runs native). **Pin

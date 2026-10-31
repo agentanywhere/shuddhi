@@ -22,5 +22,5 @@ same two things, because those are the two things worth automating:
 
 Each runs the container image, so no Python setup is needed on the runner.
 
-**Pin the image.** Use `ghcr.io/agentanywhere/shuddhi:1.2.0`, not `:latest` —
+**Pin the image.** Use `ghcr.io/agentanywhere/shuddhi:1.3.0`, not `:latest` —
 a receipt whose engine version can drift is a weaker receipt.
