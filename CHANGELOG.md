@@ -2,6 +2,8 @@
 
 Notable changes to Shuddhi. Dates are release dates.
 
+## Unreleased
+
 ## 1.3.0 — 2026-10-31
 
 **Fixed — `build-union`.** One interrupted partition no longer blocks a union:

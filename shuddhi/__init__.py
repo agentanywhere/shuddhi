@@ -17,6 +17,6 @@ Programmatic use:
 # A ".devN" suffix means unreleased code: receipts it writes say so, and are
 # never mistaken for the last release's. Releasing = drop the suffix here and
 # in pyproject.toml, date the CHANGELOG section, tag vX.Y.Z.
-__version__ = "1.3.0"
+__version__ = "1.3.1.dev0"
 
 __all__ = ["__version__"]
