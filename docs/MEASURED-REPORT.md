@@ -53,7 +53,7 @@ quality, domain, near-dup, contamination are **sampled**. Token totals are
   per-language bytes/token measured on ~30 MB/shard samples)*. Refines the
   earlier ~45B estimate, which extrapolated one global 3.9 bytes/token ratio.
 - **Contamination: 0 of 660,955 sampled documents** hit our eval material
-  (reliability-ab battery, honesty traps, eval fixtures; 8-word-gram screen,
+  (our benchmark prompts, honesty traps, eval fixtures; 8-word-gram screen,
   every candidate string-verified) *(sampled 2%)*
 - **Quality: 99.9% high / 0.09% medium / 0.02% low** at v1 thresholds
   *(sampled 2%)* — see honesty notes: this says the corpus is clean of

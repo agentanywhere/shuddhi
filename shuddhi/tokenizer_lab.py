@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Tokenizer lab — train and evaluate Tatva tokenizer candidates (v1.3).
 
-Why this exists: Data Factory measurement showed the current 32k tokenizer
-(paramanu/nano/tokenizer.json, trained on Indic Wikipedia) fragments Urdu —
+Why this exists: Data Factory measurement showed a 32k tokenizer
+(trained on Indic Wikipedia) fragments Urdu —
 1.73 bytes/token vs 3.5–4.0 for every other language, i.e. Urdu text costs
 ~2.2x the tokens per byte of content. Tokenizer choices are effectively
 irreversible once a model trains, so candidates must be built and measured
