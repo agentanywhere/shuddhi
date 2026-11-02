@@ -202,4 +202,4 @@ python3 -m pytest tests/ -q     # 80 tests, tiny fixtures, no network
 - `out/MANIFEST.json` — the corpus build manifest (the thing training runs cite).
 - `out/COMPOSITION.md` — human-readable composition tables.
 
-First production report: `portfolio/DATA-FACTORY-V1.md`.
+See [MEASURED-REPORT.md](MEASURED-REPORT.md) for results from a real build.

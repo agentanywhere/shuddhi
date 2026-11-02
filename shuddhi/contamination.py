@@ -1,8 +1,8 @@
 """Contamination check — stage 6. Protects benchmark integrity.
 
-Screens corpus documents against our evaluation material (reliability-ab
-battery prompts, honesty-trap prompts, and the eval fixture sources — see
-build_eval_set.py). Two detectors:
+Screens corpus documents against your evaluation material (benchmark
+prompts, honesty-trap prompts, and eval fixture sources — see
+eval_set.py). Two detectors:
 
   exact:   normalized full text of an eval item appearing as (or inside) a doc
   near:    any 8-word shingle of an eval item appearing in a doc

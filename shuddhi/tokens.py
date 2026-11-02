@@ -2,8 +2,8 @@
 
 Token counts for a 176 GB corpus cannot be measured exhaustively on a small
 CPU box, so the factory measures the bytes/token ratio of each shard on a
-deterministic sub-sample using the trained Tatva 32k tokenizer
-(paramanu/nano/tokenizer.json) and derives the shard estimate as
+deterministic sub-sample using a trained 32k tokenizer and derives the
+shard estimate as
 raw_bytes × tokens/byte. Both the measured sample (bytes, tokens) and the
 derived estimate are reported separately — the estimate is always labelled
 as such. This mirrors and refines the corpus-wide 3.9 bytes/token measurement
