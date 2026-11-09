@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+message: "If you use Shuddhi, please cite it as below."
+title: "Shuddhi: open-source LLM training data provenance, dedup and PII redaction"
+abstract: >-
+  Shuddhi is an open-source data factory for LLM training corpora. It gates
+  data by provenance, removes exact and near-duplicates, redacts PII, screens
+  for benchmark contamination, and seals each build with a reproducible
+  content hash. It drafts the EU AI Act Article 53(1)(d) training-content
+  summary from the build manifest.
+type: software
+authors:
+  - name: "ShepHertz Technologies"
+version: 1.3.0
+date-released: 2026-10-31
+license: Apache-2.0
+repository-code: "https://github.com/agentanywhere/shuddhi"
+url: "https://agentanywhere.ai/shuddhi"
+keywords:
+  - llm
+  - training-data
+  - data-provenance
+  - deduplication
+  - pii-redaction
+  - eu-ai-act
+  - indic-nlp
+  - reproducibility

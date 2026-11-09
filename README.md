@@ -3,13 +3,14 @@
   <img alt="Shuddhi" src="docs/img/brand/shuddhi-horizontal-light.png" width="300">
 </picture>
 
-# Shuddhi (शुद्धि) — Data Factory
+# Shuddhi (शुद्धि): open-source LLM training data provenance, dedup and PII redaction
 
-**A receipts-first data factory for sovereign AI.** Shuddhi turns raw text
-into a filtered corpus *with a verifiable identity*: every document is
-content-hashed, every shard carries provenance, every filter threshold is
-pinned, and the whole build collapses into one hash that a training run
-cites in its ledger.
+**Shuddhi is an open-source (Apache-2.0) data factory for LLM training
+corpora.** It gates data by provenance, removes exact and near-duplicates,
+redacts PII, screens for benchmark contamination, and seals every build with a
+reproducible content hash (a *build manifest*) that a training run can cite.
+It also drafts the **EU AI Act Article 53(1)(d) training-content summary** from
+that manifest. It runs on CPU, makes no network calls, and needs no account.
 
 Six months after a training run, "which documents did this model see, and
 can you prove the customer data was excluded?" should have an answer that
@@ -17,9 +18,20 @@ does not depend on anyone's memory. That is what this produces.
 
 Internally the engine is the **Tatva Data Factory**; Shuddhi is the product.
 
+| | |
+|---|---|
+| **What it is** | A Python CLI and library for LLM training-data curation with verifiable provenance |
+| **What it outputs** | A filtered corpus plus a `BUILD-MANIFEST.json` receipt (corpus build hash, filter config sha, filtered build hash, per-shard sha256) |
+| **Key capabilities** | Provenance gating, exact dedup, MinHash/LSH near-dedup, language ID, quality and toxicity filters, PII redaction, contamination checks, EU AI Act Art. 53(1)(d) summary |
+| **Languages** | Language-agnostic; proven at scale on 15 Indian languages (Indic NLP) |
+| **Licence** | Apache-2.0 |
+| **Requirements** | Python 3.10+ or Docker (x86-64 and arm64). CPU-only, no GPU |
+| **Install** | `docker run --rm ghcr.io/agentanywhere/shuddhi:latest demo` ([other options](docs/QUICKSTART.md)) |
+| **Maintainer** | [ShepHertz Technologies](https://agentanywhere.ai/shuddhi) |
+
 <p align="center">
   <img src="docs/img/shuddhi-flow.svg" width="100%"
-       alt="Raw shards flow left to right through the provenance, language-ID, dedup, quality, domain and contamination gates; one is refused at the provenance gate, duplicates collapse, junk dims out, and the survivors land in a corpus build that seals with a receipt hash.">
+       alt="Shuddhi LLM training data pipeline: raw shards flow left to right through the provenance, language-ID, dedup, quality, domain and contamination gates; one is refused at the provenance gate, duplicates collapse, junk dims out, and the survivors land in a corpus build that seals with a receipt hash.">
 </p>
 
 [![CI](https://github.com/agentanywhere/shuddhi/actions/workflows/ci.yml/badge.svg)](https://github.com/agentanywhere/shuddhi/actions/workflows/ci.yml)
@@ -64,7 +76,7 @@ No Docker? `make venv` or `make conda`, then `./scripts/demo.sh`.
 shuddhi ui --dir shuddhi-out/
 ```
 
-![The Shuddhi viewer: receipts, corpus measurements, drops by reason, and the datasets that went in](docs/img/ui.png)
+![Shuddhi build viewer showing the training-data receipt, corpus measurements, documents dropped by reason, and the datasets that went in](docs/img/ui.png)
 
 Build history, the datasets that went in, live progress while a run is
 happening, every warning and error, and the receipt to download. It reads
@@ -88,7 +100,10 @@ telemetry, and it works air-gapped because there is no CDN to reach.
 
 ---
 
-## The receipts chain
+## How does Shuddhi prove what a model was trained on?
+
+It builds a chain of hashes, one per question an auditor would ask. Each one is
+recomputable from the raw shards, so nothing depends on trusting Shuddhi.
 
 ```
 registry              source · licence · date · data_class, per shard
@@ -113,7 +128,7 @@ it in the same manifest, so nothing is lost.
 
 ---
 
-## Who this is for
+## Who is Shuddhi for?
 
 - **Anyone training or fine-tuning on data they will have to account for** —
   because a customer, a regulator, an acquirer or a court eventually asks what
@@ -135,7 +150,7 @@ this — reach for a curation pipeline and move on.
 
 ---
 
-## For the EU AI Act
+## How do I generate an EU AI Act Article 53(1)(d) training data summary?
 
 Article 53(1)(d) of Regulation (EU) 2024/1689 requires every provider placing a
 general-purpose AI model on the Union market to publish a "sufficiently detailed
@@ -172,7 +187,7 @@ it **cannot be produced** — the refusal is structural, not procedural.
 
 ---
 
-## Already using NeMo Curator, DataTrove, or Dolma?
+## How does Shuddhi compare with NeMo Curator, DataTrove and Dolma?
 
 Keep using them. They are good at throughput, and out-curating NVIDIA's GPU dedup
 is a fight that helps nobody. What none of them emits is a *receipt* — an artefact
@@ -211,7 +226,7 @@ dangerous misreading.
 
 ---
 
-## What it does
+## What does Shuddhi do? Pipeline stages
 
 | stage | module |
 |---|---|
@@ -237,7 +252,7 @@ CPU-only throughout. No GPU, no cluster, no network calls.
 
 ---
 
-## Proven at scale
+## How well does it scale? Measured results
 
 From the reference run — 176.1 GB, 33,047,370 documents, 15 languages, on a
 single 2-vCPU box:
@@ -255,6 +270,70 @@ Full detail, with coverage labelled on every number, in the
 [measured report](docs/MEASURED-REPORT.md). Claims discipline is part of the
 product: full-pass, sampled, and derived figures are never mixed silently,
 and the report states what was *not* measured.
+
+---
+
+## Frequently asked questions
+
+Short answers; the [full FAQ](docs/FAQ.md) goes deeper.
+
+### What is Shuddhi?
+
+Shuddhi (Sanskrit शुद्धि, "purification") is an open-source Python data factory
+that cleans LLM training corpora and produces a verifiable, reproducible record
+of exactly what went into them.
+
+### Is Shuddhi open source?
+
+Yes. The engine, every built-in filter, receipt generation and verification, and
+the customer-data refusal are Apache-2.0 and stay that way. See
+[Permanently open](#permanently-open).
+
+### Does Shuddhi make me compliant with the EU AI Act?
+
+No. Compliance is a legal position held by a provider, not a property of a tool.
+Shuddhi drafts the Article 53(1)(d) training-content summary from what the build
+actually recorded, and marks every field it cannot know as a **GAP** for your
+counsel to complete.
+
+### Can Shuddhi really refuse customer data?
+
+Yes. A shard whose `data_class` is customer-class is refused at the provenance
+gate, before the file is opened, in code, with no override. A build containing it
+cannot be produced.
+
+### Is the build hash a digital signature?
+
+No. It is a content hash you recompute yourself from the raw shards: no key, no
+server, no trust required.
+
+### Does Shuddhi replace NeMo Curator, DataTrove or Dolma?
+
+No, they compose. Those tools are built for throughput and getting a corpus
+clean; Shuddhi is built for proving what a corpus is. Clean with theirs, then run
+`shuddhi attest` on the output to get a receipt.
+
+### Does it need a GPU, a network connection or an account?
+
+No to all three. It is CPU-only, makes no network calls, sends no telemetry, and
+needs no account, so it works air-gapped.
+
+### Does it support Indian and other non-English languages?
+
+Yes. Language ID and script handling extend to non-Latin scripts, and the
+reference run covered 15 Indian languages. PII redaction includes India-specific
+patterns (phone, Aadhaar, PAN).
+
+### Is Shuddhi on PyPI?
+
+Not yet. Install from source (`make venv` or `make conda`) or use the published
+Docker image `ghcr.io/agentanywhere/shuddhi`.
+
+### How do I cite Shuddhi?
+
+Use the metadata in [CITATION.cff](CITATION.cff) (GitHub's "Cite this repository"
+button reads it). Pin a release version, and cite the `filtered_build_hash` of
+your build for the corpus itself.
 
 ---
 
@@ -337,7 +416,7 @@ running it as an organisation is paid.**
 The discipline that keeps this honest: if a commercial feature needs an engine
 change, that engine change is made here, in the open repository.
 
-## Use it in CI
+## Use it in CI as a training-data merge gate
 
 The provenance gate is designed to be a merge gate — `check` exits non-zero
 when any shard is untagged or carries a customer data class, so an unreviewed
